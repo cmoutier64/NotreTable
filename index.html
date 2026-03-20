@@ -412,6 +412,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div id="emoji-preview" style="font-size:32px;width:48px;height:48px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--gray-50);" onclick="document.getElementById('emoji-picker').style.display=document.getElementById('emoji-picker').style.display==='none'?'flex':'none'">🍽</div>
         <input class="form-input" id="plat-emoji" placeholder="Coller ou saisir un emoji…" style="max-width:180px" oninput="document.getElementById('emoji-preview').textContent=this.value||'🍽'">
+        <button class="btn btn-sm" type="button" onclick="forceSuggestEmoji()" title="Suggérer un emoji selon le nom" style="white-space:nowrap;">✨ Suggérer</button>
       </div>
       <div id="emoji-picker" style="display:none;flex-wrap:wrap;gap:4px;margin-top:8px;padding:8px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);max-width:320px;">
       </div>
@@ -991,6 +992,21 @@ const EMOJI_KEYWORDS = [
   [['pancake','waffle'],'🧇'],
   [['tartine','toast'],'🍞'],
 ];
+
+function forceSuggestEmoji() {
+  const titre = document.getElementById('plat-titre').value.trim();
+  if (!titre) { showToast('Saisissez un nom de plat'); return; }
+  const lower = titre.toLowerCase();
+  for (const [keywords, emoji] of EMOJI_KEYWORDS) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      document.getElementById('plat-emoji').value = emoji;
+      document.getElementById('emoji-preview').textContent = emoji;
+      showToast('Emoji suggéré : ' + emoji);
+      return;
+    }
+  }
+  showToast('Aucune suggestion trouvée pour ce nom');
+}
 
 function suggestEmoji(titre) {
   const lower = titre.toLowerCase().trim();
