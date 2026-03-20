@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notre Table — Repas en famille</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #F97316; --orange-l: #FFF7ED; --orange-m: #FDBA74; --orange-d: #C2410C;
+  --teal: #0D9488; --teal-l: #CCFBF1; --teal-m: #5EEAD4;
+  --amber: #D97706; --amber-l: #FFFBEB; --amber-m: #FCD34D;
+  --coral: #E11D48; --coral-l: #FFF1F2; --coral-m: #FDA4AF;
+  --green: #16A34A; --green-l: #F0FDF4; --green-m: #86EFAC;
+  --purple: #7C3AED; --purple-l: #F5F3FF; --purple-m: #C4B5FD;
+  --gray-50: #F9F7F4; --gray-100: #F0EDE8; --gray-200: #E0DBD3;
+  --gray-400: #9C9488; --gray-600: #6B6560; --gray-800: #2C2A27;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 12px; --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-body); background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+/* HEADER */
+.app-header { background: white; border-bottom: 1px solid var(--gray-200); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 50; }
+.app-logo { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--gray-800); display: flex; align-items: center; gap: 8px; }
+.app-logo span { color: var(--orange); }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--gray-600); transition: all 0.15s; }
+.nav-tab.active { background: var(--orange); color: white; }
+.nav-tab:hover:not(.active) { background: var(--gray-100); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.sync-status { font-size: 12px; color: var(--gray-400); display: flex; align-items: center; gap: 4px; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--coral); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* LAYOUT */
+.page { display: none; padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* PLANNING PAGE */
+.planning-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+.planning-toolbar h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+.toolbar-right { display: flex; align-items: center; gap: 8px; }
+.btn { padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-800); transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--gray-100); }
+.btn-primary { background: var(--orange); color: white; border-color: var(--orange); }
+.btn-primary:hover { background: var(--orange-d); border-color: var(--orange-d); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* PLANNING GRID */
+.planning-grid { display: flex; flex-direction: column; gap: 3px; }
+.week-row { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 3px; align-items: stretch; }
+.week-label { display: flex; flex-direction: column; justify-content: center; padding: 8px 10px; border-radius: var(--radius-sm); }
+.week-label .wk-tag { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 10px; display: inline-block; margin-bottom: 3px; width: fit-content; }
+.week-label .wk-dates { font-size: 10px; color: var(--gray-400); }
+.wk-past .wk-tag { background: var(--gray-100); color: var(--gray-600); }
+.wk-current .wk-tag { background: var(--orange-l); color: var(--orange-d); }
+.wk-future .wk-tag { background: var(--green-l); color: var(--green); }
+.week-row.wk-current .day-cell { border-color: var(--orange-m); }
+
+.day-header-row { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 3px; margin-bottom: 2px; }
+.day-header-row .spacer { }
+.day-header { text-align: center; font-size: 11px; font-weight: 500; color: var(--gray-400); padding: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.day-header.is-today { color: var(--orange-d); font-weight: 700; }
+
+.day-cell { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 4px; min-height: 70px; display: flex; flex-direction: column; gap: 3px; transition: border-color 0.15s; }
+.day-cell.drag-over { border-color: var(--orange); background: var(--orange-l); }
+.day-cell.is-today { border-color: var(--orange-m); }
+
+.meal-slot { border-radius: 6px; padding: 4px 6px; font-size: 11px; cursor: pointer; transition: all 0.15s; position: relative; line-height: 1.3; }
+.meal-slot.empty { border: 1px dashed var(--gray-200); color: var(--gray-400); text-align: center; padding: 5px 4px; }
+.meal-slot.empty:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-l); }
+.meal-slot.filled { background: var(--teal-l); color: var(--teal); border: 1px solid var(--teal-m); cursor: grab; }
+.meal-slot.filled:active { cursor: grabbing; }
+.meal-slot.filled.diner { background: var(--teal-l); color: var(--teal); border-color: var(--teal-m); }
+.meal-slot.filled.dejeuner { background: var(--amber-l); color: var(--amber); border-color: var(--amber-m); }
+.meal-slot.exterieur { background: var(--coral-l); color: var(--coral); border: 1px solid var(--coral-m); }
+.meal-slot.desactive { background: var(--gray-100); color: var(--gray-400); border: 1px dashed var(--gray-200); cursor: default; text-decoration: line-through; font-size: 10px; }
+.meal-slot.hidden { display: none; }
+.slot-label { font-size: 9px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1px; }
+.slot-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
+.slot-emoji { font-size: 13px; }
+
+.vacances-toggle { font-size: 10px; color: var(--gray-400); cursor: pointer; text-align: center; padding: 1px 0; }
+.vacances-toggle:hover { color: var(--amber); }
+.vacances-active .vacances-toggle { color: var(--amber); }
+
+/* MODAL */
+.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+.modal-backdrop.open { display: flex; }
+.modal { background: white; border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); animation: modalIn 0.15s ease; }
+@keyframes modalIn { from{transform:scale(0.96);opacity:0} to{transform:scale(1);opacity:1} }
+.modal h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin-bottom: 1.25rem; }
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font-body); color: var(--gray-800); background: white; transition: border-color 0.15s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--orange); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.saison-checkboxes { display: flex; gap: 8px; flex-wrap: wrap; }
+.saison-cb { display: none; }
+.saison-label { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); color: var(--gray-600); transition: all 0.15s; user-select: none; }
+.saison-cb:checked + .saison-label { border-color: transparent; }
+.saison-cb[value="printemps"]:checked + .saison-label { background: #ECFDF5; color: #065F46; }
+.saison-cb[value="ete"]:checked + .saison-label { background: var(--amber-l); color: var(--amber); }
+.saison-cb[value="automne"]:checked + .saison-label { background: var(--orange-l); color: var(--orange-d); }
+.saison-cb[value="hiver"]:checked + .saison-label { background: #EFF6FF; color: #1D4ED8; }
+.saison-cb[value="toutes"]:checked + .saison-label { background: var(--green-l); color: var(--green); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); }
+
+/* PLAT PICKER dans modal repas */
+.plat-search { margin-bottom: 10px; }
+.plat-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); }
+.plat-option { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.1s; border-bottom: 1px solid var(--gray-100); }
+.plat-option:last-child { border-bottom: none; }
+.plat-option:hover { background: var(--orange-l); }
+.plat-option.selected { background: var(--orange-l); }
+.plat-option-emoji { font-size: 18px; width: 26px; text-align: center; }
+.plat-option-info { flex: 1; }
+.plat-option-name { font-size: 13px; font-weight: 500; }
+.plat-option-meta { font-size: 11px; color: var(--gray-400); }
+.meal-type-tabs { display: flex; gap: 6px; margin-bottom: 1rem; }
+.meal-type-tab { flex: 1; padding: 7px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); text-align: center; transition: all 0.15s; }
+.meal-type-tab.active.diner { background: var(--teal-l); color: var(--teal); border-color: var(--teal-m); }
+.meal-type-tab.active.dejeuner { background: var(--amber-l); color: var(--amber); border-color: var(--amber-m); }
+.quick-actions { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+.quick-action { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); transition: all 0.15s; }
+.quick-action:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-l); }
+
+/* CATALOGUE PAGE */
+.catalogue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+.catalogue-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+.filters-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+.filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); transition: all 0.15s; }
+.filter-chip.active { border-color: var(--orange); background: var(--orange-l); color: var(--orange-d); }
+.filter-chip.f-printemps.active { background: #ECFDF5; color: #065F46; border-color: #6EE7B7; }
+.filter-chip.f-ete.active { background: var(--amber-l); color: var(--amber); border-color: var(--amber-m); }
+.filter-chip.f-automne.active { background: var(--orange-l); color: var(--orange-d); border-color: var(--orange-m); }
+.filter-chip.f-hiver.active { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+.filter-chip.f-fetes.active { background: var(--purple-l); color: var(--purple); border-color: var(--purple-m); }
+.search-wrap { flex: 1; max-width: 280px; position: relative; }
+.search-wrap input { width: 100%; padding: 7px 12px 7px 32px; border: 1px solid var(--gray-200); border-radius: 20px; font-size: 13px; background: white; }
+.search-wrap input:focus { outline: none; border-color: var(--orange); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 14px; pointer-events: none; }
+.plats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.plat-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; }
+.plat-card:hover { border-color: var(--orange); box-shadow: var(--shadow); transform: translateY(-1px); }
+.plat-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.plat-emoji { font-size: 32px; }
+.plat-freq-badge { font-size: 11px; background: var(--gray-100); color: var(--gray-600); padding: 2px 8px; border-radius: 10px; }
+.plat-card-name { font-size: 15px; font-weight: 500; margin-bottom: 6px; font-family: var(--font-display); }
+.plat-card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.saison-tag { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 500; }
+.tag-printemps { background: #ECFDF5; color: #065F46; }
+.tag-ete { background: var(--amber-l); color: var(--amber); }
+.tag-automne { background: var(--orange-l); color: var(--orange-d); }
+.tag-hiver { background: #EFF6FF; color: #1D4ED8; }
+.tag-toutes { background: var(--green-l); color: var(--green); }
+.tag-fete { background: var(--purple-l); color: var(--purple); }
+.plat-notes-preview { font-size: 11px; color: var(--gray-400); margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.freq-bar { height: 3px; background: var(--gray-100); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.freq-fill { height: 100%; background: var(--orange); border-radius: 2px; transition: width 0.4s; }
+.empty-state { text-align: center; padding: 3rem; color: var(--gray-400); }
+.empty-state .es-icon { font-size: 48px; margin-bottom: 1rem; }
+.empty-state p { font-size: 14px; }
+
+/* HISTORIQUE PAGE */
+.historique-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+.historique-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+.month-nav { display: flex; align-items: center; gap: 10px; }
+.month-nav button { background: white; border: 1px solid var(--gray-200); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--gray-600); }
+.month-nav button:hover { background: var(--gray-100); }
+.month-nav .month-label { font-family: var(--font-display); font-size: 16px; font-weight: 600; min-width: 140px; text-align: center; }
+.month-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.stat-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; text-align: center; }
+.stat-num { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--gray-800); }
+.stat-label { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
+.month-list { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.hist-day { border-bottom: 1px solid var(--gray-100); }
+.hist-day:last-child { border-bottom: none; }
+.hist-day-header { padding: 8px 14px; background: var(--gray-50); font-size: 12px; font-weight: 500; color: var(--gray-600); display: flex; align-items: center; gap: 6px; }
+.hist-day-header .dow { color: var(--gray-800); }
+.hist-meal { padding: 8px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.1s; }
+.hist-meal:hover { background: var(--gray-50); }
+.hist-type-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 8px; min-width: 52px; text-align: center; }
+.badge-diner { background: var(--teal-l); color: var(--teal); }
+.badge-dejeuner { background: var(--amber-l); color: var(--amber); }
+.badge-ext { background: var(--coral-l); color: var(--coral); }
+.badge-vide { background: var(--gray-100); color: var(--gray-400); }
+.hist-meal-name { font-size: 13px; flex: 1; }
+.hist-meal-emoji { font-size: 16px; }
+
+/* SUGGESTIONS PAGE */
+.sugg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+.sugg-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+.sugg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.sugg-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 14px; transition: all 0.15s; }
+.sugg-card:hover { border-color: var(--orange); box-shadow: var(--shadow); }
+.sugg-emoji { font-size: 36px; flex-shrink: 0; }
+.sugg-info { flex: 1; }
+.sugg-name { font-size: 14px; font-weight: 500; font-family: var(--font-display); margin-bottom: 3px; }
+.sugg-reason { font-size: 11px; color: var(--gray-400); }
+.sugg-btn { padding: 6px 12px; background: var(--green-l); color: var(--green); border: 1px solid var(--green-m); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.sugg-btn:hover { background: var(--green-m); }
+.ai-section { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1.25rem; }
+.ai-section h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; }
+.ai-response { font-size: 13px; color: var(--gray-600); line-height: 1.7; margin-top: 10px; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); white-space: pre-wrap; }
+.ai-input-row { display: flex; gap: 8px; }
+.ai-input-row input { flex: 1; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-800); color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 300; transition: transform 0.25s; box-shadow: var(--shadow-md); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .nav-tabs { gap: 1px; }
+  .nav-tab { padding: 5px 9px; font-size: 12px; }
+  .week-row { grid-template-columns: 56px repeat(7, 1fr); }
+  .week-label { padding: 5px 6px; }
+  .day-cell { min-height: 55px; padding: 3px; }
+  .meal-slot { padding: 3px 4px; }
+  .slot-name { font-size: 10px; }
+  .month-stats { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 480px) {
+  .app-logo { font-size: 18px; }
+  .day-header-row, .week-row { grid-template-columns: 44px repeat(7, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-logo">Notre <span>Table</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('planning')">Planning</button>
+    <button class="nav-tab" onclick="showPage('catalogue')">Catalogue</button>
+    <button class="nav-tab" onclick="showPage('historique')">Historique</button>
+    <button class="nav-tab" onclick="showPage('suggestions')">Suggestions</button>
+  </nav>
+  <div class="header-right">
+    <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connecté</span></div>
+  </div>
+</header>
+
+<!-- ===== PLANNING ===== -->
+<div class="page active" id="page-planning">
+  <div class="planning-toolbar">
+    <h2>Planning des repas</h2>
+    <div class="toolbar-right">
+      <button class="btn btn-sm" onclick="scrollToToday()">Aujourd'hui</button>
+    </div>
+  </div>
+  <div class="day-header-row">
+    <div class="spacer"></div>
+    <div class="day-header" id="dh-0">Lun</div>
+    <div class="day-header" id="dh-1">Mar</div>
+    <div class="day-header" id="dh-2">Mer</div>
+    <div class="day-header" id="dh-3">Jeu</div>
+    <div class="day-header" id="dh-4">Ven</div>
+    <div class="day-header" id="dh-5">Sam</div>
+    <div class="day-header" id="dh-6">Dim</div>
+  </div>
+  <div class="planning-grid" id="planning-grid"></div>
+</div>
+
+<!-- ===== CATALOGUE ===== -->
+<div class="page" id="page-catalogue">
+  <div class="catalogue-header">
+    <h2>Catalogue de plats</h2>
+    <button class="btn btn-primary" onclick="openPlatModal()">+ Nouveau plat</button>
+  </div>
+  <div class="filters-row">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="cat-search" placeholder="Rechercher…" oninput="renderCatalogue()">
+    </div>
+    <button class="filter-chip f-all active" onclick="setFilter('all')">Tous</button>
+    <button class="filter-chip f-printemps" onclick="setFilter('printemps')">🌸 Printemps</button>
+    <button class="filter-chip f-ete" onclick="setFilter('ete')">☀️ Été</button>
+    <button class="filter-chip f-automne" onclick="setFilter('automne')">🍂 Automne</button>
+    <button class="filter-chip f-hiver" onclick="setFilter('hiver')">❄️ Hiver</button>
+    <button class="filter-chip f-fetes" onclick="setFilter('fetes')">🎄 Fêtes</button>
+  </div>
+  <div class="plats-grid" id="plats-grid"></div>
+</div>
+
+<!-- ===== HISTORIQUE ===== -->
+<div class="page" id="page-historique">
+  <div class="historique-header">
+    <h2>Historique</h2>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <div class="month-label" id="month-label"></div>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+  </div>
+  <div class="month-stats" id="month-stats"></div>
+  <div class="month-list" id="month-list"></div>
+</div>
+
+<!-- ===== SUGGESTIONS ===== -->
+<div class="page" id="page-suggestions">
+  <div class="sugg-header">
+    <h2>Suggestions <span style="font-size:14px;font-weight:400;color:var(--gray-400)" id="sugg-season-label"></span></h2>
+    <button class="btn" onclick="renderSuggestions()">↻ Rafraîchir</button>
+  </div>
+  <div class="sugg-grid" id="sugg-grid"></div>
+  <div class="ai-section">
+    <h3>✨ Demander à l'IA</h3>
+    <div class="ai-input-row">
+      <input class="form-input" id="ai-prompt" placeholder="Ex: idées légères pour l'été, plat rapide un soir de semaine…" />
+      <button class="btn btn-primary" onclick="askAI()">Envoyer</button>
+    </div>
+    <div class="ai-response" id="ai-response" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL REPAS ===== -->
+<div class="modal-backdrop" id="modal-repas">
+  <div class="modal">
+    <h3 id="modal-repas-title">Modifier le repas</h3>
+    <div class="meal-type-tabs" id="meal-type-tabs"></div>
+    <div class="quick-actions">
+      <button class="quick-action" onclick="setMealStatus('exterieur')">🍽 À l'extérieur</button>
+      <button class="quick-action" onclick="setMealStatus('desactive')">✕ Désactiver</button>
+      <button class="quick-action" onclick="setMealStatus('vide')" style="color:var(--coral)">🗑 Effacer</button>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Choisir un plat</div>
+      <div class="plat-search"><input class="form-input" id="repas-search" placeholder="Rechercher un plat…" oninput="filterPlatOptions()"></div>
+      <div class="plat-list" id="repas-plat-list"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note (optionnel)</label>
+      <input class="form-input" id="repas-note" placeholder="Note pour ce repas…">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-repas')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveRepas()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PLAT ===== -->
+<div class="modal-backdrop" id="modal-plat">
+  <div class="modal">
+    <h3 id="modal-plat-title">Nouveau plat</h3>
+    <div class="form-group">
+      <label class="form-label">Titre *</label>
+      <input class="form-input" id="plat-titre" placeholder="Ex: Gratin dauphinois">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Emoji</label>
+      <input class="form-input" id="plat-emoji" placeholder="🥘" maxlength="4" style="max-width:80px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Saison(s)</label>
+      <div class="saison-checkboxes">
+        <input type="checkbox" class="saison-cb" id="s-toutes" value="toutes" onchange="handleSaisonChange(this)"><label class="saison-label" for="s-toutes">🌍 Toutes</label>
+        <input type="checkbox" class="saison-cb" id="s-printemps" value="printemps" onchange="handleSaisonChange(this)"><label class="saison-label" for="s-printemps">🌸 Printemps</label>
+        <input type="checkbox" class="saison-cb" id="s-ete" value="ete" onchange="handleSaisonChange(this)"><label class="saison-label" for="s-ete">☀️ Été</label>
+        <input type="checkbox" class="saison-cb" id="s-automne" value="automne" onchange="handleSaisonChange(this)"><label class="saison-label" for="s-automne">🍂 Automne</label>
+        <input type="checkbox" class="saison-cb" id="s-hiver" value="hiver" onchange="handleSaisonChange(this)"><label class="saison-label" for="s-hiver">❄️ Hiver</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Période festive</label>
+      <input class="form-input" id="plat-fetes" placeholder="Ex: Noël, Pâques, Épiphanie…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fréquence cible</label>
+      <select class="form-select" id="plat-frequence">
+        <option value="annuelle">Annuelle</option>
+        <option value="saisonniere">Saisonnière</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (recette, variantes, avis…)</label>
+      <textarea class="form-textarea" id="plat-notes" placeholder="Notes libres…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btn-delete-plat" onclick="deletePlat()" style="color:var(--coral);margin-right:auto;display:none">Supprimer</button>
+      <button class="btn" onclick="closeModal('modal-plat')">Annuler</button>
+      <button class="btn btn-primary" onclick="savePlat()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG SUPABASE — remplacer ANON_KEY quand disponible
+// ============================================================
+const SUPABASE_URL = 'https://szndxdnpgyojlpximwzc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6bmR4ZG5wZ3lvamxweGltd3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI1NTYsImV4cCI6MjA4OTUyODU1Nn0.7hg0fwXHR1ZxdHDNJIJq4SBwQz5xKQMuZLaCzKGGgrI';
+
+// ============================================================
+// STATE
+// ============================================================
+let plats = [];
+let repas = {};  // key: "YYYY-MM-DD_type" => objet repas
+let currentFilter = 'all';
+let currentMonth = new Date();
+let editingRepasKey = null;
+let editingPlatId = null;
+let selectedPlatId = null;
+let dragSource = null;
+
+// ============================================================
+// SUPABASE HELPERS
+// ============================================================
+async function sbFetch(endpoint, options = {}) {
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': options.prefer || 'return=representation',
+        ...options.headers
+      },
+      ...options
+    });
+    if (!res.ok) throw new Error(await res.text());
+    setSyncStatus('ok');
+    return options.method === 'DELETE' ? null : await res.json();
+  } catch(e) {
+    setSyncStatus('error');
+    showToast('Erreur de synchronisation');
+    throw e;
+  }
+}
+
+async function loadAll() {
+  setSyncStatus('syncing');
+  try {
+    const [platsData, repasData] = await Promise.all([
+      sbFetch('plats?order=titre'),
+      sbFetch('repas?order=date')
+    ]);
+    plats = platsData || [];
+    repas = {};
+    for (const r of (repasData || [])) {
+      repas[`${r.date}_${r.type}`] = r;
+    }
+    setSyncStatus('ok');
+  } catch(e) {
+    // Si pas de connexion, on part sur données vides
+    plats = getSamplePlats();
+    setSyncStatus('error');
+  }
+  renderAll();
+}
+
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
+  label.textContent = status === 'syncing' ? 'Sync…' : status === 'error' ? 'Hors ligne' : 'Connecté';
+}
+
+// ============================================================
+// DATES & WEEKS
+// ============================================================
+const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAYS_LONG = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function getMondayOf(date) {
+  const d = new Date(date);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function toISO(date) { return date.toISOString().slice(0,10); }
+
+function getWeeksToShow() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const monday = getMondayOf(today);
+  const weeks = [];
+  for (let w = -4; w <= 2; w++) {
+    const wStart = new Date(monday);
+    wStart.setDate(monday.getDate() + w * 7);
+    const days = [];
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(wStart);
+      day.setDate(wStart.getDate() + d);
+      days.push(day);
+    }
+    const diff = w < 0 ? 'past' : w === 0 ? 'current' : 'future';
+    weeks.push({ days, type: diff, offset: w });
+  }
+  return weeks;
+}
+
+function getCurrentSeason() {
+  const m = new Date().getMonth();
+  if (m >= 2 && m <= 4) return 'printemps';
+  if (m >= 5 && m <= 7) return 'ete';
+  if (m >= 8 && m <= 10) return 'automne';
+  return 'hiver';
+}
+
+function isWeekend(date) { return date.getDay() === 0 || date.getDay() === 6; }
+
+function isVacances(dateISO) {
+  const stored = JSON.parse(localStorage.getItem('vacances') || '{}');
+  const monday = toISO(getMondayOf(new Date(dateISO)));
+  return !!stored[monday];
+}
+
+function toggleVacances(mondayISO) {
+  const stored = JSON.parse(localStorage.getItem('vacances') || '{}');
+  stored[mondayISO] ? delete stored[mondayISO] : stored[mondayISO] = true;
+  localStorage.setItem('vacances', JSON.stringify(stored));
+  renderPlanning();
+}
+
+function shouldShowDejeuner(date) {
+  return isWeekend(date) || isVacances(toISO(date));
+}
+
+// ============================================================
+// PLANNING RENDER
+// ============================================================
+function renderPlanning() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weeks = getWeeksToShow();
+  const grid = document.getElementById('planning-grid');
+  grid.innerHTML = '';
+
+  // Update day headers
+  const startMonday = weeks[0].days[0];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startMonday); d.setDate(startMonday.getDate() + i);
+    const dh = document.getElementById('dh-'+i);
+    const isToday = d.toDateString() === today.toDateString();
+    dh.className = 'day-header' + (isToday ? ' is-today' : '');
+    dh.textContent = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i];
+  }
+
+  weeks.forEach(week => {
+    const mondayISO = toISO(week.days[0]);
+    const isVac = isVacances(mondayISO);
+    const row = document.createElement('div');
+    row.className = `week-row wk-${week.type}${isVac ? ' vacances-active' : ''}`;
+
+    // Week label
+    const wLabel = document.createElement('div');
+    wLabel.className = 'week-label';
+    const tagText = week.type === 'past' ? (week.offset === -1 ? 'S−1' : week.offset === -2 ? 'S−2' : week.offset === -3 ? 'S−3' : 'S−4')
+                  : week.type === 'current' ? 'Cette sem.' : (week.offset === 1 ? 'S+1' : 'S+2');
+    const d0 = week.days[0], d6 = week.days[6];
+    const dateRange = `${d0.getDate()}/${d0.getMonth()+1} – ${d6.getDate()}/${d6.getMonth()+1}`;
+    wLabel.innerHTML = `<span class="wk-tag">${tagText}</span><div class="wk-dates">${dateRange}</div><div class="vacances-toggle" onclick="toggleVacances('${mondayISO}')" title="Semaine de vacances">${isVac ? '🏖 vac.' : '+ vac.'}</div>`;
+    row.appendChild(wLabel);
+
+    // Day cells
+    week.days.forEach((date, di) => {
+      const dateISO = toISO(date);
+      const isToday = date.toDateString() === today.toDateString();
+      const showDej = shouldShowDejeuner(date);
+      const cell = document.createElement('div');
+      cell.className = 'day-cell' + (isToday ? ' is-today' : '');
+      cell.dataset.date = dateISO;
+
+      // Drag & drop
+      cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+      cell.addEventListener('drop', e => { e.preventDefault(); cell.classList.remove('drag-over'); handleDrop(dateISO); });
+
+      if (showDej) cell.appendChild(buildSlot(dateISO, 'dejeuner'));
+      cell.appendChild(buildSlot(dateISO, 'diner'));
+      row.appendChild(cell);
+    });
+
+    grid.appendChild(row);
+  });
+}
+
+function buildSlot(dateISO, type) {
+  const key = `${dateISO}_${type}`;
+  const r = repas[key];
+  const slot = document.createElement('div');
+  const statut = r ? r.statut : 'vide';
+  slot.dataset.key = key;
+
+  if (statut === 'desactive') {
+    slot.className = 'meal-slot desactive';
+    slot.textContent = '—';
+    slot.onclick = () => openRepasModal(dateISO, type);
+    return slot;
+  }
+  if (statut === 'exterieur') {
+    slot.className = 'meal-slot exterieur';
+    slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">🍽 Extérieur</span>`;
+    slot.onclick = () => openRepasModal(dateISO, type);
+    return slot;
+  }
+  if (statut === 'plat' && r && r.plat_id) {
+    const plat = plats.find(p => p.id === r.plat_id);
+    if (plat) {
+      slot.className = `meal-slot filled ${type}`;
+      slot.draggable = true;
+      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${plat.titre}</span>`;
+      slot.addEventListener('dragstart', () => { dragSource = key; setTimeout(() => slot.style.opacity = '0.4', 0); });
+      slot.addEventListener('dragend', () => { slot.style.opacity = '1'; dragSource = null; });
+      slot.onclick = () => openRepasModal(dateISO, type);
+      return slot;
+    }
+  }
+  // vide
+  slot.className = 'meal-slot empty';
+  slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em">${type === 'diner' ? 'Dîner' : 'Déj.'}</span>`;
+  slot.onclick = () => openRepasModal(dateISO, type);
+  return slot;
+}
+
+async function handleDrop(targetDateISO) {
+  if (!dragSource) return;
+  const [srcDate, srcType] = dragSource.split('_');
+  const srcRepas = repas[dragSource];
+  if (!srcRepas || srcRepas.statut !== 'plat') return;
+
+  const targetKey = `${targetDateISO}_${srcType}`;
+  // Swap or move
+  const targetRepas = repas[targetKey];
+
+  // Update source → vide
+  await saveRepasData(srcDate, srcType, { statut: 'vide', plat_id: null, note: null });
+  // Update target → plat de source
+  await saveRepasData(targetDateISO, srcType, { statut: 'plat', plat_id: srcRepas.plat_id, note: srcRepas.note });
+
+  if (targetRepas && targetRepas.statut === 'plat') {
+    await saveRepasData(srcDate, srcType, { statut: 'plat', plat_id: targetRepas.plat_id, note: targetRepas.note });
+  }
+  renderPlanning();
+}
+
+function scrollToToday() {
+  const todayCell = document.querySelector('.day-cell.is-today');
+  if (todayCell) todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ============================================================
+// REPAS MODAL
+// ============================================================
+function openRepasModal(dateISO, type) {
+  editingRepasKey = `${dateISO}_${type}`;
+  const r = repas[editingRepasKey];
+  selectedPlatId = r && r.statut === 'plat' ? r.plat_id : null;
+
+  const d = new Date(dateISO + 'T12:00:00');
+  document.getElementById('modal-repas-title').textContent =
+    `${DAYS_LONG[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()].toLowerCase()} — ${type === 'diner' ? 'Dîner' : 'Déjeuner'}`;
+
+  document.getElementById('repas-note').value = r && r.note ? r.note : '';
+  document.getElementById('repas-search').value = '';
+  renderPlatOptions('');
+  document.getElementById('modal-repas').classList.add('open');
+}
+
+function filterPlatOptions() {
+  renderPlatOptions(document.getElementById('repas-search').value);
+}
+
+function renderPlatOptions(q) {
+  const season = getCurrentSeason();
+  const list = document.getElementById('repas-plat-list');
+  let filtered = plats.filter(p => {
+    if (q) return p.titre.toLowerCase().includes(q.toLowerCase());
+    return p.saisons && (p.saisons.includes(season) || p.saisons.includes('toutes') || p.saisons.length === 0);
+  });
+  if (!q) filtered.sort((a, b) => {
+    const aFreq = getFreq(a.id), bFreq = getFreq(b.id);
+    return bFreq - aFreq;
+  });
+  list.innerHTML = filtered.slice(0, 20).map(p => `
+    <div class="plat-option ${selectedPlatId === p.id ? 'selected' : ''}" onclick="selectPlatInModal('${p.id}')">
+      <span class="plat-option-emoji">${p.emoji || '🍽'}</span>
+      <div class="plat-option-info">
+        <div class="plat-option-name">${p.titre}</div>
+        <div class="plat-option-meta">${(p.saisons||[]).join(', ') || 'toutes saisons'} · fait ${getFreq(p.id)}×</div>
+      </div>
+    </div>`).join('') || '<div style="padding:12px;color:var(--gray-400);font-size:13px;text-align:center">Aucun plat trouvé</div>';
+}
+
+function selectPlatInModal(id) {
+  selectedPlatId = id;
+  renderPlatOptions(document.getElementById('repas-search').value);
+}
+
+function setMealStatus(status) {
+  const [date, type] = editingRepasKey.split('_');
+  saveRepasData(date, type, { statut: status, plat_id: null, note: document.getElementById('repas-note').value || null });
+  closeModal('modal-repas');
+  renderPlanning();
+  showToast(status === 'exterieur' ? '🍽 Repas à l\'extérieur noté' : status === 'desactive' ? 'Créneau désactivé' : 'Créneau effacé');
+}
+
+async function saveRepas() {
+  const [date, type] = editingRepasKey.split('_');
+  const note = document.getElementById('repas-note').value || null;
+  if (selectedPlatId) {
+    await saveRepasData(date, type, { statut: 'plat', plat_id: selectedPlatId, note });
+    showToast('✓ Repas enregistré');
+  } else {
+    await saveRepasData(date, type, { statut: 'vide', plat_id: null, note });
+  }
+  closeModal('modal-repas');
+  renderPlanning();
+}
+
+async function saveRepasData(date, type, data) {
+  const key = `${date}_${type}`;
+  const existing = repas[key];
+  if (SUPABASE_KEY === 'REMPLACER_PAR_ANON_KEY') {
+    // Mode local
+    if (data.statut === 'vide' && !data.note) { delete repas[key]; return; }
+    repas[key] = { ...(existing || {}), date, type, ...data };
+    return;
+  }
+  try {
+    if (existing && existing.id) {
+      if (data.statut === 'vide' && !data.note) {
+        await sbFetch(`repas?id=eq.${existing.id}`, { method: 'DELETE', prefer: '' });
+        delete repas[key];
+      } else {
+        const updated = await sbFetch(`repas?id=eq.${existing.id}`, { method: 'PATCH', body: JSON.stringify(data) });
+        repas[key] = updated[0];
+      }
+    } else {
+      if (data.statut === 'vide' && !data.note) return;
+      const created = await sbFetch('repas', { method: 'POST', body: JSON.stringify({ date, type, ...data }) });
+      repas[key] = created[0];
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ============================================================
+// CATALOGUE
+// ============================================================
+function getFreq(platId) {
+  return Object.values(repas).filter(r => r.plat_id === platId && r.statut === 'plat').length;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.classList.toggle('active', c.classList.contains('f-' + f) || (f === 'all' && c.classList.contains('f-all')));
+  });
+  renderCatalogue();
+}
+
+function renderCatalogue() {
+  const q = document.getElementById('cat-search').value.toLowerCase();
+  const grid = document.getElementById('plats-grid');
+  const maxFreq = Math.max(...plats.map(p => getFreq(p.id)), 1);
+  let filtered = plats.filter(p => {
+    const matchQ = !q || p.titre.toLowerCase().includes(q);
+    const matchF = currentFilter === 'all' ||
+      (currentFilter === 'fetes' ? (p.fetes && p.fetes.length > 0) :
+       (p.saisons && (p.saisons.includes(currentFilter) || p.saisons.includes('toutes'))));
+    return matchQ && matchF;
+  });
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">🍽</div><p>Aucun plat trouvé.<br>Ajoutez votre premier plat !</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(p => {
+    const freq = getFreq(p.id);
+    const tags = (p.saisons || []).map(s => `<span class="saison-tag tag-${s}">${saisonLabel(s)}</span>`).join('');
+    const feteTags = (p.fetes || []).map(f => `<span class="saison-tag tag-fete">🎄 ${f}</span>`).join('');
+    return `<div class="plat-card" onclick="openPlatModal('${p.id}')">
+      <div class="plat-card-top"><span class="plat-emoji">${p.emoji || '🍽'}</span><span class="plat-freq-badge">${freq}× cuisiné</span></div>
+      <div class="plat-card-name">${p.titre}</div>
+      <div class="plat-card-tags">${tags}${feteTags}</div>
+      ${p.notes ? `<div class="plat-notes-preview">${p.notes}</div>` : ''}
+      <div class="freq-bar"><div class="freq-fill" style="width:${Math.round(freq/maxFreq*100)}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function saisonLabel(s) {
+  return {toutes:'🌍 Toutes',printemps:'🌸 Printemps',ete:'☀️ Été',automne:'🍂 Automne',hiver:'❄️ Hiver'}[s] || s;
+}
+
+function handleSaisonChange(cb) {
+  if (cb.value === 'toutes' && cb.checked) {
+    document.querySelectorAll('.saison-cb:not([value="toutes"])').forEach(c => c.checked = false);
+  } else if (cb.checked) {
+    document.getElementById('s-toutes').checked = false;
+  }
+}
+
+function openPlatModal(id) {
+  editingPlatId = id || null;
+  const p = id ? plats.find(x => x.id === id) : null;
+  document.getElementById('modal-plat-title').textContent = p ? 'Modifier le plat' : 'Nouveau plat';
+  document.getElementById('plat-titre').value = p ? p.titre : '';
+  document.getElementById('plat-emoji').value = p ? (p.emoji || '') : '';
+  document.getElementById('plat-fetes').value = p ? (p.fetes || []).join(', ') : '';
+  document.getElementById('plat-frequence').value = p ? (p.frequence || 'annuelle') : 'annuelle';
+  document.getElementById('plat-notes').value = p ? (p.notes || '') : '';
+  document.getElementById('btn-delete-plat').style.display = p ? 'inline-flex' : 'none';
+  // Saisons
+  document.querySelectorAll('.saison-cb').forEach(c => {
+    c.checked = p ? (p.saisons || []).includes(c.value) : c.value === 'toutes';
+  });
+  document.getElementById('modal-plat').classList.add('open');
+}
+
+async function savePlat() {
+  const titre = document.getElementById('plat-titre').value.trim();
+  if (!titre) { showToast('Veuillez saisir un titre'); return; }
+  const saisons = Array.from(document.querySelectorAll('.saison-cb:checked')).map(c => c.value);
+  const fetesRaw = document.getElementById('plat-fetes').value.trim();
+  const fetes = fetesRaw ? fetesRaw.split(',').map(f => f.trim()).filter(Boolean) : [];
+  const data = {
+    titre,
+    emoji: document.getElementById('plat-emoji').value.trim() || null,
+    saisons,
+    fetes,
+    frequence: document.getElementById('plat-frequence').value,
+    notes: document.getElementById('plat-notes').value.trim() || null
+  };
+
+  if (SUPABASE_KEY === 'REMPLACER_PAR_ANON_KEY') {
+    if (editingPlatId) {
+      const idx = plats.findIndex(p => p.id === editingPlatId);
+      if (idx >= 0) plats[idx] = { ...plats[idx], ...data };
+    } else {
+      plats.push({ id: 'local_' + Date.now(), ...data });
+    }
+    closeModal('modal-plat'); renderCatalogue(); showToast('✓ Plat enregistré'); return;
+  }
+
+  try {
+    if (editingPlatId) {
+      const updated = await sbFetch(`plats?id=eq.${editingPlatId}`, { method: 'PATCH', body: JSON.stringify(data) });
+      const idx = plats.findIndex(p => p.id === editingPlatId);
+      if (idx >= 0) plats[idx] = updated[0];
+    } else {
+      const created = await sbFetch('plats', { method: 'POST', body: JSON.stringify(data) });
+      plats.push(created[0]);
+    }
+    closeModal('modal-plat'); renderCatalogue(); renderPlatOptions(''); showToast('✓ Plat enregistré');
+  } catch(e) {}
+}
+
+async function deletePlat() {
+  if (!editingPlatId) return;
+  if (!confirm('Supprimer ce plat ?')) return;
+  if (SUPABASE_KEY !== 'REMPLACER_PAR_ANON_KEY') {
+    await sbFetch(`plats?id=eq.${editingPlatId}`, { method: 'DELETE', prefer: '' });
+  }
+  plats = plats.filter(p => p.id !== editingPlatId);
+  closeModal('modal-plat'); renderCatalogue(); showToast('Plat supprimé');
+}
+
+// ============================================================
+// HISTORIQUE
+// ============================================================
+function changeMonth(delta) {
+  currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
+  renderHistorique();
+}
+
+function renderHistorique() {
+  const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
+  document.getElementById('month-label').textContent = `${MONTHS_FR[m]} ${y}`;
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let cuisines = 0, exterieurs = 0, platCount = {};
+
+  const dayGroups = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateISO = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const date = new Date(dateISO + 'T12:00:00');
+    const dayRepas = [];
+    ['dejeuner','diner'].forEach(type => {
+      const r = repas[`${dateISO}_${type}`];
+      if (!r) return;
+      dayRepas.push({ type, r });
+      if (r.statut === 'plat') {
+        cuisines++;
+        platCount[r.plat_id] = (platCount[r.plat_id] || 0) + 1;
+      }
+      if (r.statut === 'exterieur') exterieurs++;
+    });
+    if (dayRepas.length) dayGroups[dateISO] = { date, meals: dayRepas };
+  }
+
+  // Stats
+  const topPlatId = Object.entries(platCount).sort((a,b)=>b[1]-a[1])[0];
+  const topPlat = topPlatId ? plats.find(p => p.id === topPlatId[0]) : null;
+  document.getElementById('month-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${cuisines}</div><div class="stat-label">Repas cuisinés</div></div>
+    <div class="stat-card"><div class="stat-num">${exterieurs}</div><div class="stat-label">Repas à l'extérieur</div></div>
+    <div class="stat-card"><div class="stat-num" style="font-size:20px">${topPlat ? (topPlat.emoji || '🍽') + ' ' + topPlat.titre : '—'}</div><div class="stat-label">Plat le + fréquent</div></div>`;
+
+  // List
+  const list = document.getElementById('month-list');
+  if (!Object.keys(dayGroups).length) {
+    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--gray-400);font-size:14px">Aucun repas enregistré ce mois-ci</div>';
+    return;
+  }
+  list.innerHTML = Object.entries(dayGroups).reverse().map(([dateISO, {date, meals}]) => `
+    <div class="hist-day">
+      <div class="hist-day-header"><span class="dow">${DAYS_LONG[date.getDay()]}</span> ${date.getDate()} ${MONTHS_FR[date.getMonth()]}</div>
+      ${meals.map(({type, r}) => {
+        const plat = r.plat_id ? plats.find(p => p.id === r.plat_id) : null;
+        const badgeClass = r.statut === 'exterieur' ? 'badge-ext' : type === 'diner' ? 'badge-diner' : 'badge-dejeuner';
+        const name = r.statut === 'exterieur' ? 'À l\'extérieur' : r.statut === 'vide' ? 'Non renseigné' : (plat ? plat.titre : 'Plat inconnu');
+        const emoji = plat ? (plat.emoji || '🍽') : (r.statut === 'exterieur' ? '🍽' : '');
+        return `<div class="hist-meal" onclick="openRepasModal('${dateISO}','${type}')">
+          <span class="hist-type-badge ${badgeClass}">${type === 'diner' ? 'Dîner' : 'Déjeuner'}</span>
+          <span class="hist-meal-emoji">${emoji}</span>
+          <span class="hist-meal-name">${name}</span>
+          ${r.note ? `<span style="font-size:11px;color:var(--gray-400)">📝</span>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+// ============================================================
+// SUGGESTIONS
+// ============================================================
+function renderSuggestions() {
+  const season = getCurrentSeason();
+  const seasonLabels = {printemps:'🌸 Printemps',ete:'☀️ Été',automne:'🍂 Automne',hiver:'❄️ Hiver'};
+  document.getElementById('sugg-season-label').textContent = '— ' + seasonLabels[season];
+
+  const recentPlatIds = new Set(
+    Object.values(repas)
+      .filter(r => r.statut === 'plat' && r.plat_id)
+      .sort((a,b) => b.date > a.date ? 1 : -1)
+      .slice(0, 14)
+      .map(r => r.plat_id)
+  );
+
+  const seasonal = plats.filter(p =>
+    p.saisons && (p.saisons.includes(season) || p.saisons.includes('toutes') || p.saisons.length === 0)
+  );
+  const notRecent = seasonal.filter(p => !recentPlatIds.has(p.id));
+  const recent = seasonal.filter(p => recentPlatIds.has(p.id));
+  const suggestions = [...notRecent, ...recent].slice(0, 8);
+
+  const reasons = [
+    'Parfait pour la saison', 'Longtemps non cuisiné', 'Très apprécié en famille',
+    'Idéal ce soir', 'À remettre au menu', 'Facile et rapide', 'Un classique', 'Pourquoi pas ?'
+  ];
+
+  const grid = document.getElementById('sugg-grid');
+  if (!suggestions.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">🌿</div><p>Ajoutez des plats à votre catalogue pour obtenir des suggestions !</p></div>';
+    return;
+  }
+  grid.innerHTML = suggestions.map((p, i) => `
+    <div class="sugg-card">
+      <span class="sugg-emoji">${p.emoji || '🍽'}</span>
+      <div class="sugg-info">
+        <div class="sugg-name">${p.titre}</div>
+        <div class="sugg-reason">${reasons[i % reasons.length]} · ${getFreq(p.id)}× cuisiné</div>
+      </div>
+      <button class="sugg-btn" onclick="addSuggestionToPlanning('${p.id}')">+ Ajouter</button>
+    </div>`).join('');
+}
+
+function addSuggestionToPlanning(platId) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dateISO = toISO(today);
+  const key = `${dateISO}_diner`;
+  if (!repas[key] || repas[key].statut === 'vide') {
+    saveRepasData(dateISO, 'diner', { statut: 'plat', plat_id: platId, note: null });
+    showPage('planning');
+    showToast('✓ Ajouté au dîner d\'aujourd\'hui');
+  } else {
+    showToast('Dîner déjà planifié aujourd\'hui — modifiez-le dans le planning');
+  }
+}
+
+async function askAI() {
+  const prompt = document.getElementById('ai-prompt').value.trim();
+  if (!prompt) return;
+  const respDiv = document.getElementById('ai-response');
+  respDiv.style.display = 'block';
+  respDiv.textContent = '…';
+  try {
+    const season = getCurrentSeason();
+    const recentNames = Object.values(repas).filter(r=>r.statut==='plat'&&r.plat_id).slice(-20).map(r=>{const p=plats.find(x=>x.id===r.plat_id);return p?p.titre:''}).filter(Boolean);
+    const context = `Tu es un assistant culinaire pour une famille de 5 (2 adultes, 3 enfants). Saison actuelle: ${season}. Plats récents: ${recentNames.slice(0,10).join(', ')||'aucun'}. Catalogue: ${plats.slice(0,15).map(p=>p.titre).join(', ')}.`;
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: `${context}\n\nDemande: ${prompt}\n\nRéponds en français, de façon concise et pratique (5-8 idées max).` }]
+      })
+    });
+    const data = await res.json();
+    respDiv.textContent = data.content?.[0]?.text || 'Pas de réponse';
+  } catch(e) {
+    respDiv.textContent = 'Erreur de connexion à l\'IA.';
+  }
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => { if (t.textContent.toLowerCase().includes(name.slice(0,5))) t.classList.add('active'); });
+  if (name === 'suggestions') renderSuggestions();
+  if (name === 'historique') renderHistorique();
+  if (name === 'catalogue') renderCatalogue();
+  if (name === 'planning') renderPlanning();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function renderAll() { renderPlanning(); renderCatalogue(); renderHistorique(); renderSuggestions(); }
+
+// ============================================================
+// SAMPLE DATA (mode hors ligne)
+// ============================================================
+function getSamplePlats() {
+  return [
+    { id: 's1', titre: 'Lasagnes maison', emoji: '🍝', saisons: ['toutes'], fetes: [], frequence: 'annuelle', notes: 'Recette grand-mère, béchamel maison' },
+    { id: 's2', titre: 'Poulet rôti', emoji: '🍗', saisons: ['toutes'], fetes: [], frequence: 'annuelle', notes: '' },
+    { id: 's3', titre: 'Soupe au potiron', emoji: '🎃', saisons: ['automne', 'hiver'], fetes: [], frequence: 'saisonniere', notes: 'Avec du lait de coco' },
+    { id: 's4', titre: 'Salade niçoise', emoji: '🥗', saisons: ['ete'], fetes: [], frequence: 'saisonniere', notes: '' },
+    { id: 's5', titre: 'Gratin dauphinois', emoji: '🥔', saisons: ['automne', 'hiver'], fetes: [], frequence: 'saisonniere', notes: '' },
+    { id: 's6', titre: 'Pizza maison', emoji: '🍕', saisons: ['toutes'], fetes: [], frequence: 'annuelle', notes: 'Pâte à la main le vendredi soir' },
+    { id: 's7', titre: 'Pot-au-feu', emoji: '🍲', saisons: ['hiver'], fetes: [], frequence: 'saisonniere', notes: '' },
+    { id: 's8', titre: 'Tarte aux fraises', emoji: '🍓', saisons: ['printemps'], fetes: [], frequence: 'saisonniere', notes: '' },
+    { id: 's9', titre: 'Bûche de Noël', emoji: '🎂', saisons: ['hiver'], fetes: ['Noël'], frequence: 'annuelle', notes: '' },
+    { id: 's10', titre: 'Agneau pascal', emoji: '🐑', saisons: ['printemps'], fetes: ['Pâques'], frequence: 'annuelle', notes: '' },
+  ];
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadAll();
+</script>
+</body>
+</html>
