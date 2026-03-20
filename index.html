@@ -337,6 +337,10 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
       <div class="plat-search"><input class="form-input" id="repas-search" placeholder="Rechercher un plat…" oninput="filterPlatOptions()"></div>
       <div class="plat-list" id="repas-plat-list"></div>
     </div>
+    <div class="form-group" id="titre-override-group" style="display:none">
+      <label class="form-label">Préciser le titre <span style="font-weight:400;color:var(--gray-400)">(pour ce repas uniquement)</span></label>
+      <input class="form-input" id="repas-titre-override" placeholder="Ex: Quiche concombre…">
+    </div>
     <div class="form-group">
       <label class="form-label">Note (optionnel)</label>
       <input class="form-input" id="repas-note" placeholder="Note pour ce repas…">
@@ -614,7 +618,8 @@ function buildSlot(dateISO, type) {
     if (plat) {
       slot.className = `meal-slot filled ${type}`;
       slot.draggable = true;
-      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${plat.titre}</span>`;
+      const displayTitre = r.titre_override || plat.titre;
+      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${displayTitre}</span>`;
       slot.addEventListener('dragstart', () => { dragSource = key; setTimeout(() => slot.style.opacity = '0.4', 0); });
       slot.addEventListener('dragend', () => { slot.style.opacity = '1'; dragSource = null; });
       slot.onclick = () => openRepasModal(dateISO, type);
@@ -668,6 +673,8 @@ function openRepasModal(dateISO, type) {
 
   document.getElementById('repas-note').value = r && r.note ? r.note : '';
   document.getElementById('repas-search').value = '';
+  document.getElementById('repas-titre-override').value = r && r.titre_override ? r.titre_override : (r && r.plat_id ? (plats.find(p=>p.id===r.plat_id)||{}).titre||'' : '');
+  document.getElementById('titre-override-group').style.display = (r && r.plat_id) ? 'block' : 'none';
   renderPlatOptions('');
   document.getElementById('modal-repas').classList.add('open');
 }
@@ -699,12 +706,20 @@ function renderPlatOptions(q) {
 
 function selectPlatInModal(id) {
   selectedPlatId = id;
+  const plat = plats.find(p => p.id === id);
+  const overrideGroup = document.getElementById('titre-override-group');
+  const overrideInput = document.getElementById('repas-titre-override');
+  if (plat) {
+    overrideGroup.style.display = 'block';
+    overrideInput.value = plat.titre;
+    overrideInput.select();
+  }
   renderPlatOptions(document.getElementById('repas-search').value);
 }
 
-function setMealStatus(status) {
+async function setMealStatus(status) {
   const [date, type] = editingRepasKey.split('_');
-  saveRepasData(date, type, { statut: status, plat_id: null, note: document.getElementById('repas-note').value || null });
+  await saveRepasData(date, type, { statut: status, plat_id: null, note: document.getElementById('repas-note').value || null });
   closeModal('modal-repas');
   renderPlanning();
   showToast(status === 'exterieur' ? '🍽 Repas à l\'extérieur noté' : status === 'desactive' ? 'Créneau désactivé' : 'Créneau effacé');
@@ -713,11 +728,14 @@ function setMealStatus(status) {
 async function saveRepas() {
   const [date, type] = editingRepasKey.split('_');
   const note = document.getElementById('repas-note').value || null;
+  const titreOverride = document.getElementById('repas-titre-override').value.trim() || null;
   if (selectedPlatId) {
-    await saveRepasData(date, type, { statut: 'plat', plat_id: selectedPlatId, note });
+    const plat = plats.find(p => p.id === selectedPlatId);
+    const finalTitre = (titreOverride && plat && titreOverride !== plat.titre) ? titreOverride : null;
+    await saveRepasData(date, type, { statut: 'plat', plat_id: selectedPlatId, note, titre_override: finalTitre });
     showToast('✓ Repas enregistré');
   } else {
-    await saveRepasData(date, type, { statut: 'vide', plat_id: null, note });
+    await saveRepasData(date, type, { statut: 'vide', plat_id: null, note, titre_override: null });
   }
   closeModal('modal-repas');
   renderPlanning();
