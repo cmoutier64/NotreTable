@@ -75,6 +75,11 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .day-cell.is-today { border-color: var(--orange-m); }
 
 .meal-slot { border-radius: 6px; padding: 4px 6px; font-size: 11px; cursor: pointer; transition: all 0.15s; position: relative; line-height: 1.3; flex: 1; min-height: 0; min-width: 0; width: 100%; display: flex; flex-direction: column; justify-content: center; }
+.meal-slot .slot-x { display: none; position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: rgba(0,0,0,0.15); color: inherit; font-size: 9px; line-height: 14px; text-align: center; cursor: pointer; z-index: 2; }
+.meal-slot:hover .slot-x { display: block; }
+.meal-slot.desactive .slot-x { display: none; }
+.slot-restore { display: none; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--gray-200); color: var(--gray-600); font-size: 10px; line-height: 16px; text-align: center; cursor: pointer; z-index: 2; }
+.meal-slot.desactive:hover .slot-restore { display: block; }
 .meal-slot.empty { border: 1px dashed var(--gray-200); color: var(--gray-400); text-align: center; padding: 5px 4px; }
 .meal-slot.empty:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-l); }
 .meal-slot.filled { background: var(--teal-l); color: var(--teal); border: 1px solid var(--teal-m); cursor: grab; }
@@ -331,8 +336,8 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     <div class="meal-type-tabs" id="meal-type-tabs"></div>
     <div class="quick-actions">
       <button class="quick-action" onclick="setMealStatus('exterieur')">🍽 À l'extérieur</button>
-      <button class="quick-action" onclick="setMealStatus('desactive')">✕ Désactiver</button>
-      <button class="quick-action" onclick="setMealStatus('vide')" style="color:var(--coral)">🗑 Effacer</button>
+      <button class="quick-action" onclick="setMealStatus('desactive')">✕ Supprimer ce créneau</button>
+      <button class="quick-action" onclick="setMealStatus('vide')" style="color:var(--coral)">🗑 Effacer le plat</button>
     </div>
     <div class="form-group">
       <div class="form-label">Choisir un plat</div>
@@ -537,7 +542,7 @@ function toggleVacances(mondayISO) {
 }
 
 function shouldShowDejeuner(date) {
-  return isWeekend(date) || isVacances(toISO(date));
+  return true; // tous les jours ont déjeuner + dîner par défaut
 }
 
 // ============================================================
@@ -563,7 +568,7 @@ function renderPlanning() {
     const mondayISO = toISO(week.days[0]);
     const isVac = isVacances(mondayISO);
     const row = document.createElement('div');
-    row.className = `week-row wk-${week.type}${isVac ? ' vacances-active' : ''}`;
+    row.className = `week-row wk-${week.type}`;
 
     // Week label
     const wLabel = document.createElement('div');
@@ -572,7 +577,7 @@ function renderPlanning() {
                   : week.type === 'current' ? 'Cette sem.' : (week.offset === 1 ? 'S+1' : 'S+2');
     const d0 = week.days[0], d6 = week.days[6];
     const dateRange = `${d0.getDate()}/${d0.getMonth()+1} – ${d6.getDate()}/${d6.getMonth()+1}`;
-    wLabel.innerHTML = `<span class="wk-tag">${tagText}</span><div class="wk-dates">${dateRange}</div><div class="vacances-toggle" onclick="toggleVacances('${mondayISO}')" title="Semaine de vacances">${isVac ? '🏖 vac.' : '+ vac.'}</div>`;
+    wLabel.innerHTML = `<span class="wk-tag">${tagText}</span><div class="wk-dates">${dateRange}</div>`;
     row.appendChild(wLabel);
 
     // Day cells
@@ -589,11 +594,9 @@ function renderPlanning() {
       cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
       cell.addEventListener('drop', e => { e.preventDefault(); cell.classList.remove('drag-over'); handleDrop(dateISO); });
 
-      if (showDej) {
-        cell.appendChild(buildSlot(dateISO, 'dejeuner'));
-        cell.classList.add('has-two-slots');
-      }
+      cell.appendChild(buildSlot(dateISO, 'dejeuner'));
       cell.appendChild(buildSlot(dateISO, 'diner'));
+      cell.classList.add('has-two-slots');
       row.appendChild(cell);
     });
 
@@ -610,13 +613,12 @@ function buildSlot(dateISO, type) {
 
   if (statut === 'desactive') {
     slot.className = 'meal-slot desactive';
-    slot.textContent = '—';
-    slot.onclick = () => openRepasModal(dateISO, type);
+    slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em;opacity:.5">${type === 'diner' ? 'Dîner' : 'Déj.'} désactivé</span><span class="slot-restore" title="Réactiver" onclick="quickRestore(event,'${dateISO}','${type}')">↩</span>`;
     return slot;
   }
   if (statut === 'exterieur') {
     slot.className = 'meal-slot exterieur';
-    slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">🍽 Extérieur</span>`;
+    slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">🍽 Extérieur</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
     slot.onclick = () => openRepasModal(dateISO, type);
     return slot;
   }
@@ -626,7 +628,7 @@ function buildSlot(dateISO, type) {
       slot.className = `meal-slot filled ${type}`;
       slot.draggable = true;
       const displayTitre = r.titre_override || plat.titre;
-      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${displayTitre}</span>`;
+      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${displayTitre}</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
       slot.addEventListener('dragstart', () => { dragSource = key; setTimeout(() => slot.style.opacity = '0.4', 0); });
       slot.addEventListener('dragend', () => { slot.style.opacity = '1'; dragSource = null; });
       slot.onclick = () => openRepasModal(dateISO, type);
@@ -635,7 +637,7 @@ function buildSlot(dateISO, type) {
   }
   // vide
   slot.className = 'meal-slot empty';
-  slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em">${type === 'diner' ? 'Dîner' : 'Déj.'}</span>`;
+  slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
   slot.onclick = () => openRepasModal(dateISO, type);
   return slot;
 }
@@ -673,6 +675,18 @@ async function handleDrop(targetDateISO) {
     await saveRepasData(srcDate, srcType, { statut: 'vide', plat_id: null, note: null, titre_override: null });
   }
   renderPlanning(); // rafraîchissement final avec ids Supabase
+}
+
+async function quickDisable(e, dateISO, type) {
+  e.stopPropagation();
+  await saveRepasData(dateISO, type, { statut: 'desactive', plat_id: null, note: null });
+  renderPlanning();
+}
+
+async function quickRestore(e, dateISO, type) {
+  e.stopPropagation();
+  await saveRepasData(dateISO, type, { statut: 'vide', plat_id: null, note: null });
+  renderPlanning();
 }
 
 function scrollToToday() {
