@@ -642,18 +642,32 @@ async function handleDrop(targetDateISO) {
   if (!srcRepas || srcRepas.statut !== 'plat') return;
 
   const targetKey = `${targetDateISO}_${srcType}`;
-  // Swap or move
+  if (dragSource === targetKey) return; // même case, rien à faire
+
+  // Snapshot des deux avant toute modification
+  const srcSnapshot = { plat_id: srcRepas.plat_id, note: srcRepas.note, titre_override: srcRepas.titre_override || null };
   const targetRepas = repas[targetKey];
+  const targetSnapshot = (targetRepas && targetRepas.statut === 'plat')
+    ? { plat_id: targetRepas.plat_id, note: targetRepas.note, titre_override: targetRepas.titre_override || null }
+    : null;
 
-  // Update source → vide
-  await saveRepasData(srcDate, srcType, { statut: 'vide', plat_id: null, note: null });
-  // Update target → plat de source
-  await saveRepasData(targetDateISO, srcType, { statut: 'plat', plat_id: srcRepas.plat_id, note: srcRepas.note });
-
-  if (targetRepas && targetRepas.statut === 'plat') {
-    await saveRepasData(srcDate, srcType, { statut: 'plat', plat_id: targetRepas.plat_id, note: targetRepas.note });
+  // Mettre à jour state local immédiatement pour réactivité
+  if (targetSnapshot) {
+    repas[dragSource] = { ...(srcRepas), ...{ statut: 'plat', plat_id: targetSnapshot.plat_id, note: targetSnapshot.note, titre_override: targetSnapshot.titre_override } };
+  } else {
+    delete repas[dragSource];
   }
-  renderPlanning();
+  repas[targetKey] = { ...(targetRepas || {}), date: targetDateISO, type: srcType, statut: 'plat', plat_id: srcSnapshot.plat_id, note: srcSnapshot.note, titre_override: srcSnapshot.titre_override };
+  renderPlanning(); // affichage immédiat
+
+  // Puis persister en base
+  await saveRepasData(targetDateISO, srcType, { statut: 'plat', plat_id: srcSnapshot.plat_id, note: srcSnapshot.note, titre_override: srcSnapshot.titre_override });
+  if (targetSnapshot) {
+    await saveRepasData(srcDate, srcType, { statut: 'plat', plat_id: targetSnapshot.plat_id, note: targetSnapshot.note, titre_override: targetSnapshot.titre_override });
+  } else {
+    await saveRepasData(srcDate, srcType, { statut: 'vide', plat_id: null, note: null, titre_override: null });
+  }
+  renderPlanning(); // rafraîchissement final avec ids Supabase
 }
 
 function scrollToToday() {
