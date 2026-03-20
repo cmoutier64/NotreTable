@@ -219,6 +219,31 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .ai-input-row { display: flex; gap: 8px; }
 .ai-input-row input { flex: 1; }
 
+/* SAISIE RAPIDE */
+.saisie-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+.saisie-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+.saisie-nav { display: flex; align-items: center; gap: 10px; }
+.saisie-week-label { font-size: 14px; font-weight: 500; color: var(--gray-600); min-width: 180px; text-align: center; }
+.saisie-grid { display: flex; flex-direction: column; gap: 6px; }
+.saisie-day { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.saisie-day-header { padding: 8px 14px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); font-size: 13px; font-weight: 500; color: var(--gray-800); display: flex; align-items: center; gap: 8px; }
+.saisie-day-header .saisie-date { color: var(--gray-400); font-weight: 400; font-size: 12px; }
+.saisie-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.saisie-slot { padding: 10px 14px; border-right: 1px solid var(--gray-100); display: flex; flex-direction: column; gap: 6px; }
+.saisie-slot:last-child { border-right: none; }
+.saisie-slot-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray-400); }
+.saisie-select-wrap { position: relative; }
+.saisie-select { width: 100%; padding: 6px 28px 6px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-800); background: white; appearance: none; cursor: pointer; }
+.saisie-select:focus { outline: none; border-color: var(--orange); }
+.saisie-select.has-value.diner { background: var(--teal-l); border-color: var(--teal-m); color: var(--teal); }
+.saisie-select.has-value.dejeuner { background: var(--amber-l); border-color: var(--amber-m); color: var(--amber); }
+.saisie-select.exterieur { background: var(--coral-l); border-color: var(--coral-m); color: var(--coral); }
+.saisie-select.desactive { background: var(--gray-100); color: var(--gray-400); }
+.saisie-select-arrow { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--gray-400); pointer-events: none; }
+.saisie-titre-override { width: 100%; padding: 4px 8px; border: 1px dashed var(--gray-200); border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font-body); color: var(--gray-600); background: transparent; margin-top: 2px; }
+.saisie-titre-override:focus { outline: none; border-color: var(--orange); border-style: solid; }
+.saisie-save-row { padding: 12px 14px; border-top: 1px solid var(--gray-100); display: flex; justify-content: flex-end; gap: 8px; }
+
 /* TOAST */
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-800); color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 300; transition: transform 0.25s; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -250,6 +275,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     <button class="nav-tab" onclick="showPage('catalogue')">Catalogue</button>
     <button class="nav-tab" onclick="showPage('historique')">Historique</button>
     <button class="nav-tab" onclick="showPage('suggestions')">Suggestions</button>
+    <button class="nav-tab" onclick="showPage('saisie')">Saisie rapide</button>
   </nav>
   <div class="header-right">
     <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connecté</span></div>
@@ -329,6 +355,19 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
   </div>
 </div>
 
+<!-- ===== SAISIE RAPIDE ===== -->
+<div class="page" id="page-saisie">
+  <div class="saisie-header">
+    <h2>Saisie rapide — historique</h2>
+    <div class="saisie-nav">
+      <button class="btn" onclick="saisieChangeWeek(-1)">‹ Semaine préc.</button>
+      <span class="saisie-week-label" id="saisie-week-label"></span>
+      <button class="btn" onclick="saisieChangeWeek(1)">Semaine suiv. ›</button>
+    </div>
+  </div>
+  <div class="saisie-grid" id="saisie-grid"></div>
+</div>
+
 <!-- ===== MODAL REPAS ===== -->
 <div class="modal-backdrop" id="modal-repas">
   <div class="modal">
@@ -366,11 +405,16 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     <h3 id="modal-plat-title">Nouveau plat</h3>
     <div class="form-group">
       <label class="form-label">Titre *</label>
-      <input class="form-input" id="plat-titre" placeholder="Ex: Gratin dauphinois">
+      <input class="form-input" id="plat-titre" placeholder="Ex: Gratin dauphinois" oninput="suggestEmoji(this.value)">
     </div>
     <div class="form-group">
       <label class="form-label">Emoji</label>
-      <input class="form-input" id="plat-emoji" placeholder="🥘" maxlength="4" style="max-width:80px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div id="emoji-preview" style="font-size:32px;width:48px;height:48px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--gray-50);" onclick="document.getElementById('emoji-picker').style.display=document.getElementById('emoji-picker').style.display==='none'?'flex':'none'">🍽</div>
+        <input class="form-input" id="plat-emoji" placeholder="Coller ou saisir un emoji…" style="max-width:180px" oninput="document.getElementById('emoji-preview').textContent=this.value||'🍽'">
+      </div>
+      <div id="emoji-picker" style="display:none;flex-wrap:wrap;gap:4px;margin-top:8px;padding:8px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);max-width:320px;">
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Saison(s)</label>
@@ -426,6 +470,7 @@ let editingPlatId = null;
 let selectedPlatId = null;
 let dragSource = null;
 let returnToRepasAfterPlat = false;
+let saisieReturnContext = null; // { dateISO, type } when creating plat from saisie rapide
 
 // ============================================================
 // SUPABASE HELPERS
@@ -865,12 +910,138 @@ function openPlatFromRepas() {
   openPlatModal(null, searchVal);
 }
 
+function openPlatFromSaisie(dateISO, type) {
+  // Prefill with whatever is typed/selected in the select as hint
+  const sel = document.getElementById(`s-${dateISO}-${type}`);
+  const selectedText = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text.trim() : '';
+  const hint = selectedText && selectedText.startsWith('—') ? '' : selectedText;
+  saisieReturnContext = { dateISO, type };
+  openPlatModal(null, hint);
+}
+
+// Keyword → emoji mapping for auto-suggestion
+const EMOJI_KEYWORDS = [
+  // Pâtes & riz
+  [['lasagne','lasagnes','bolognaise','bolo'],'🍝'],
+  [['pâtes','pasta','spaghetti','tagliatelle','fettuccine','linguine','penne','rigatoni','farfalle','carbonara','pesto'],'🍝'],
+  [['riz','risotto','paella','wok'],'🍚'],
+  [['nouilles','ramen','udon','soba'],'🍜'],
+  // Viandes
+  [['poulet','poule','volaille','dinde'],'🍗'],
+  [['bœuf','boeuf','steak','entrecôte','bavette','faux-filet','tartare','bourguignon','daube'],'🥩'],
+  [['porc','cochon','côtelette','rôti','filet mignon','jambon','lardons'],'🥩'],
+  [['agneau','gigot','navarin','tajine'],'🫕'],
+  [['lapin','lièvre'],'🐇'],
+  [['canard','magret','confit'],'🦆'],
+  [['saucisse','merguez','chipolata','knack','hot-dog','hotdog'],'🌭'],
+  [['burger','hamburger'],'🍔'],
+  [['nuggets','cordon bleu'],'🍗'],
+  // Poissons & fruits de mer
+  [['saumon','truite','cabillaud','colin','merlu','dorade','bar','sole','thon','sardine','anchois','hareng'],'🐟'],
+  [['crevette','gambas'],'🦐'],
+  [['moule','huître'],'🦪'],
+  [['homard','langouste','crabe'],'🦞'],
+  [['calmar','seiche','encornet'],'🦑'],
+  [['poisson'],'🐟'],
+  // Soupes & mijotés
+  [['soupe','velouté','bouillon','bisque','gazpacho'],'🍲'],
+  [['pot-au-feu','potée','garbure'],'🍲'],
+  [['couscous'],'🫕'],
+  [['tajine','tagine'],'🫕'],
+  [['curry','massaman','tikka'],'🍛'],
+  [['chili'],'🌶'],
+  // Pizzas & snacking
+  [['pizza'],'🍕'],
+  [['quiche','tarte salée'],'🥧'],
+  [['crêpe','galette'],'🥞'],
+  [['sandwich','panini','croque'],'🥪'],
+  [['wrap','burrito','tacos'],'🌯'],
+  [['falafel'],'🧆'],
+  // Légumes & végétarien
+  [['gratin','dauphinois','chou-fleur'],'🥔'],
+  [['ratatouille'],'🫑'],
+  [['salade'],'🥗'],
+  [['soufflé','gratin'],'🧀'],
+  [['tomate','tomates farcies'],'🍅'],
+  [['courgette'],'🥒'],
+  [['aubergine'],'🍆'],
+  [['poivron'],'🫑'],
+  [['brocoli'],'🥦'],
+  [['épinard','épinards'],'🥬'],
+  [['champignon','champignons'],'🍄'],
+  [['avocat'],'🥑'],
+  [['carotte','carottes'],'🥕'],
+  // Œufs
+  [['œuf','omelette','brouillé','cocotte','mimosa'],'🍳'],
+  // Fromage
+  [['fondue','raclette','tartiflette','reblochon'],'🧀'],
+  [['fromage'],'🧀'],
+  // Desserts
+  [['gâteau','cake','marbré','moelleux','fondant'],'🎂'],
+  [['tarte','tourte'],'🥧'],
+  [['crumble'],'🫐'],
+  [['mousse','tiramisu','panna cotta'],'🍮'],
+  [['glace','sorbet'],'🍦'],
+  [['crème brûlée','flan'],'🍮'],
+  [['bûche'],'🎂'],
+  [['madeleine','financier','cookie','biscuit'],'🍪'],
+  [['brownie'],'🍫'],
+  [['pain perdu','brioche'],'🍞'],
+  // Petit-déj & brunch
+  [['pancake','waffle'],'🧇'],
+  [['tartine','toast'],'🍞'],
+];
+
+function suggestEmoji(titre) {
+  const lower = titre.toLowerCase().trim();
+  if (!lower) return;
+  // Only suggest if emoji field is empty or still default
+  const currentEmoji = document.getElementById('plat-emoji').value.trim();
+  if (currentEmoji && currentEmoji !== '🍽') return; // don't override a manual choice
+  for (const [keywords, emoji] of EMOJI_KEYWORDS) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      document.getElementById('plat-emoji').value = emoji;
+      document.getElementById('emoji-preview').textContent = emoji;
+      return;
+    }
+  }
+}
+
+const FOOD_EMOJIS = [
+  '🍕','🍔','🌮','🌯','🥙','🥗','🍝','🍜','🍲','🍛','🍣','🍱','🥘','🍢',
+  '🥩','🍗','🍖','🥓','🌭','🍟','🥚','🍳','🧇','🥞','🧈','🥐','🍞','🥖',
+  '🧀','🥨','🥯','🥫','🍅','🥕','🥦','🥬','🧅','🧄','🥔','🌽','🥒','🫑',
+  '🍆','🥑','🫘','🥜','🌰','🍄','🍠','🫚','🫛','🫒','🐟','🐠','🦐','🦞',
+  '🦀','🦑','🐙','🥩','🥗','🫕','🍲','🫔','🥣','🍱','🍘','🍙','🍚','🍛',
+  '🥟','🦪','🥮','🧆','🧇','🥧','🍰','🎂','🧁','🍩','🍪','🍫','🍬','🍭',
+  '🫖','☕','🧃','🥛','🍼','🧋','🥂','🍷','🍸','🍹','🧉','🍺','🥃','🫗'
+];
+
+function renderEmojiPicker() {
+  const picker = document.getElementById('emoji-picker');
+  picker.innerHTML = FOOD_EMOJIS.map(e =>
+    `<span style="font-size:22px;cursor:pointer;padding:4px;border-radius:6px;transition:background 0.1s;" 
+     onmouseover="this.style.background='var(--gray-200)'" 
+     onmouseout="this.style.background='transparent'"
+     onclick="selectEmoji('${e}')">${e}</span>`
+  ).join('');
+}
+
+function selectEmoji(e) {
+  document.getElementById('plat-emoji').value = e;
+  document.getElementById('emoji-preview').textContent = e;
+  document.getElementById('emoji-picker').style.display = 'none';
+}
+
 function openPlatModal(id, prefillTitre) {
   editingPlatId = id || null;
   const p = id ? plats.find(x => x.id === id) : null;
   document.getElementById('modal-plat-title').textContent = p ? 'Modifier le plat' : 'Nouveau plat';
   document.getElementById('plat-titre').value = p ? p.titre : (prefillTitre || '');
   document.getElementById('plat-emoji').value = p ? (p.emoji || '') : '';
+  document.getElementById('emoji-preview').textContent = (p && p.emoji) ? p.emoji : '🍽';
+  document.getElementById('emoji-picker').style.display = 'none';
+  renderEmojiPicker();
   document.getElementById('plat-fetes').value = p ? (p.fetes || []).join(', ') : '';
   document.getElementById('plat-frequence').value = p ? (p.frequence || 'annuelle') : 'annuelle';
   document.getElementById('plat-notes').value = p ? (p.notes || '') : '';
@@ -906,6 +1077,7 @@ async function savePlat() {
     }
     closeModal('modal-plat'); renderCatalogue(); showToast('✓ Plat enregistré');
     if (returnToRepasAfterPlat) { returnToRepasAfterPlat = false; const newPlat = plats[plats.length-1]; reopenRepasModalWithPlat(newPlat); }
+    else if (saisieReturnContext) { const ctx = saisieReturnContext; saisieReturnContext = null; injectPlatInSaisie(plats[plats.length-1], ctx.dateISO, ctx.type); }
     return;
   }
 
@@ -920,7 +1092,21 @@ async function savePlat() {
     }
     closeModal('modal-plat'); renderCatalogue(); renderPlatOptions(''); showToast('✓ Plat enregistré');
     if (returnToRepasAfterPlat) { returnToRepasAfterPlat = false; reopenRepasModalWithPlat(plats[plats.length-1]); }
+    else if (saisieReturnContext) { const ctx = saisieReturnContext; saisieReturnContext = null; injectPlatInSaisie(plats[plats.length-1], ctx.dateISO, ctx.type); }
   } catch(e) {}
+}
+
+function injectPlatInSaisie(plat, dateISO, type) {
+  if (!plat) return;
+  // Rebuild the select options with the new plat and select it
+  renderSaisie(); // full re-render picks up the new plat
+  // Then select the new plat in the right slot
+  const sel = document.getElementById(`s-${dateISO}-${type}`);
+  if (sel) {
+    sel.value = plat.id;
+    onSaisieSelectChange(sel, dateISO, type);
+  }
+  showToast(`✓ "${plat.titre}" créé et sélectionné`);
 }
 
 function reopenRepasModalWithPlat(plat) {
@@ -1103,6 +1289,160 @@ function showPage(name) {
   if (name === 'historique') renderHistorique();
   if (name === 'catalogue') renderCatalogue();
   if (name === 'planning') renderPlanning();
+  if (name === 'saisie') renderSaisie();
+}
+
+// ============================================================
+// SAISIE RAPIDE
+// ============================================================
+let saisieWeekOffset = -1; // commence sur la semaine passée
+
+function saisieChangeWeek(delta) {
+  saisieWeekOffset += delta;
+  renderSaisie();
+}
+
+function renderSaisie() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const monday = getMondayOf(today);
+  const wStart = new Date(monday);
+  wStart.setDate(monday.getDate() + saisieWeekOffset * 7);
+  const days = Array.from({length:7}, (_, i) => {
+    const d = new Date(wStart); d.setDate(wStart.getDate() + i); return d;
+  });
+
+  const d0 = days[0], d6 = days[6];
+  const MONTHS_SHORT = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  document.getElementById('saisie-week-label').textContent =
+    `${d0.getDate()} ${MONTHS_SHORT[d0.getMonth()]} – ${d6.getDate()} ${MONTHS_SHORT[d6.getMonth()]} ${d6.getFullYear()}`;
+
+  const grid = document.getElementById('saisie-grid');
+  grid.innerHTML = '';
+
+  const platOptions = plats.map(p =>
+    `<option value="${p.id}">${p.emoji || ''} ${p.titre}</option>`
+  ).join('');
+
+  const specialOptions = `
+    <option value="">— non renseigné —</option>
+    <option value="exterieur">🍽 À l'extérieur</option>
+    <option value="desactive">✕ Désactivé</option>
+  `;
+
+  days.forEach(date => {
+    const dateISO = toISO(date);
+    const dow = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][date.getDay()];
+    const dateLabel = `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
+
+    const day = document.createElement('div');
+    day.className = 'saisie-day';
+    day.innerHTML = `
+      <div class="saisie-day-header">
+        <span>${dow}</span>
+        <span class="saisie-date">${dateLabel}</span>
+      </div>
+      <div class="saisie-slots">
+        ${buildSaisieSlot(dateISO, 'dejeuner', platOptions, specialOptions)}
+        ${buildSaisieSlot(dateISO, 'diner', platOptions, specialOptions)}
+      </div>
+      <div class="saisie-save-row">
+        <button class="btn btn-sm" onclick="saveSaisieDay('${dateISO}')">Enregistrer ce jour</button>
+      </div>`;
+    grid.appendChild(day);
+  });
+
+  // Add week save button at bottom
+  const saveAll = document.createElement('div');
+  saveAll.style.cssText = 'display:flex;justify-content:flex-end;margin-top:8px;';
+  saveAll.innerHTML = `<button class="btn btn-primary" onclick="saveSaisieWeek()">✓ Enregistrer toute la semaine</button>`;
+  grid.appendChild(saveAll);
+}
+
+function buildSaisieSlot(dateISO, type, platOptions, specialOptions) {
+  const key = `${dateISO}_${type}`;
+  const r = repas[key];
+  const currentVal = r ? (r.statut === 'plat' ? r.plat_id : r.statut) : '';
+  const currentOverride = r && r.titre_override ? r.titre_override : '';
+  const labelText = type === 'dejeuner' ? 'Déjeuner' : 'Dîner';
+  const hasVal = r && r.statut === 'plat';
+  const isExt = r && r.statut === 'exterieur';
+  const isDisabled = r && r.statut === 'desactive';
+  const selectClass = `saisie-select ${hasVal ? 'has-value ' + type : ''} ${isExt ? 'exterieur' : ''} ${isDisabled ? 'desactive' : ''}`;
+
+  return `<div class="saisie-slot">
+    <div class="saisie-slot-label">${labelText}</div>
+    <div class="saisie-select-wrap">
+      <select class="saisie-select ${hasVal ? 'has-value ' + type : ''} ${isExt ? 'exterieur' : ''} ${isDisabled ? 'desactive' : ''}"
+        id="s-${dateISO}-${type}"
+        onchange="onSaisieSelectChange(this, '${dateISO}', '${type}')">
+        ${specialOptions}
+        <optgroup label="— Plats —">${platOptions}</optgroup>
+      </select>
+      <span class="saisie-select-arrow">▾</span>
+    </div>
+    <input class="saisie-titre-override"
+      id="st-${dateISO}-${type}"
+      placeholder="Préciser le titre…"
+      value="${currentOverride}"
+      style="display:${hasVal ? 'block' : 'none'}">
+    <button class="btn btn-sm" style="border-style:dashed;font-size:11px;padding:3px 8px;" onclick="openPlatFromSaisie('${dateISO}','${type}')">+ Nouveau plat</button>
+  </div>`;
+}
+
+function onSaisieSelectChange(sel, dateISO, type) {
+  const val = sel.value;
+  const overrideInput = document.getElementById(`st-${dateISO}-${type}`);
+  // Update styling
+  sel.className = 'saisie-select';
+  if (val && val !== 'exterieur' && val !== 'desactive') {
+    sel.classList.add('has-value', type);
+    const plat = plats.find(p => p.id === val);
+    if (overrideInput) { overrideInput.style.display = 'block'; overrideInput.value = overrideInput.value || (plat ? plat.titre : ''); }
+  } else if (val === 'exterieur') {
+    sel.classList.add('exterieur');
+    if (overrideInput) overrideInput.style.display = 'none';
+  } else if (val === 'desactive') {
+    sel.classList.add('desactive');
+    if (overrideInput) overrideInput.style.display = 'none';
+  } else {
+    if (overrideInput) overrideInput.style.display = 'none';
+  }
+}
+
+async function saveSaisieDay(dateISO) {
+  const types = ['dejeuner', 'diner'];
+  for (const type of types) {
+    const sel = document.getElementById(`s-${dateISO}-${type}`);
+    const override = document.getElementById(`st-${dateISO}-${type}`);
+    if (!sel) continue;
+    const val = sel.value;
+    const titreOverride = override && override.value.trim() ? override.value.trim() : null;
+    if (val === '' || val === null) {
+      await saveRepasData(dateISO, type, { statut: 'vide', plat_id: null, note: null, titre_override: null });
+    } else if (val === 'exterieur' || val === 'desactive') {
+      await saveRepasData(dateISO, type, { statut: val, plat_id: null, note: null, titre_override: null });
+    } else {
+      const plat = plats.find(p => p.id === val);
+      const finalOverride = (titreOverride && plat && titreOverride !== plat.titre) ? titreOverride : null;
+      await saveRepasData(dateISO, type, { statut: 'plat', plat_id: val, note: null, titre_override: finalOverride });
+    }
+  }
+  showToast('✓ Jour enregistré');
+  renderSaisie();
+}
+
+async function saveSaisieWeek() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const monday = getMondayOf(today);
+  const wStart = new Date(monday);
+  wStart.setDate(monday.getDate() + saisieWeekOffset * 7);
+  const days = Array.from({length:7}, (_, i) => {
+    const d = new Date(wStart); d.setDate(wStart.getDate() + i); return d;
+  });
+  for (const date of days) {
+    await saveSaisieDay(toISO(date));
+  }
+  showToast('✓ Semaine complète enregistrée !');
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
