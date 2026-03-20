@@ -1,358 +1,3 @@
-
-je souhaite créer une application personnelle qui m'aide à  gérer les repas pour ma famille. nous sommes un couple avec 3 enfants
-
-11:53
-
-Reading frontend design skill
-Reading frontend design skill
-Quelques questions pour que l'app soit parfaitement adaptée à votre famille !
-
-Dites-moi vos préférences pour que je puisse créer l'application idéale pour votre famille 👇
-
-Q : Quelles fonctionnalités souhaitez-vous ? (Sélectionnez toutes les réponses applicables)
-R : Planning de la semaine, Recettes favorites, classer des recettes disponibles, en fonction des saisons. je veux aussi garder l'historique, que ça propose un roulement dans ce qui a déjà été fait donc dans les idées pré-enregistrées et avoir une option qui permet d'en suggérer selon ce qui est souvent utilisé
-
-Q : Quel style visuel vous attire ?
-R : Coloré & familial
-
-Q : Aide à la planification des repas ?
-R : Les deux
-
-11:56
-Parfait, j'ai tout ce qu'il me faut ! Je vais créer une application complète et colorée pour votre famille. 🍽️
-
-
-
-Voici votre application complète ! Voici ce qu'elle fait :
-
-Planning de la semaine — cliquez sur "+ déj." ou "+ dîner" pour assigner une recette à n'importe quel jour. Naviguez entre les semaines avec les flèches.
-
-Recettes — toutes vos recettes classées par saison (printemps, été, automne, hiver). Vous voyez combien de fois chaque plat a été fait. Ajoutez-en de nouvelles avec le bouton "+".
-
-Suggestions IA — l'application propose automatiquement des repas en tenant compte de la saison actuelle, de ce qui a été fait récemment, et de ce que votre famille préfère. Le bouton "Demander à l'IA ↗" m'envoie un message pour des idées supplémentaires.
-
-Historique — suivez tous les repas passés avec les statistiques : total de repas planifiés, recettes différentes essayées, semaines actives.
-
-Dites-moi si vous souhaitez ajouter quelque chose — par exemple une liste de courses automatique, des restrictions alimentaires par membre de la famille, ou des notes par recette !
-
-non je ne veux pas de liste de courses. dans l'historique, je voudrais que ça remonte loin avec des pages mensuelles par exemple. je dois pouvoir dire que certains repas sont pris à l'extérieur. des notes sur les recettes ok. Tous les plats n'ont pas une recette associée, mais au moins un titre et spécifier si c'est annuel ou suivant des saisons. J'aime bien  le visuel, mais peut-être faudrait-il qu'on commence par faire une expression du besoin?
-
-12:06
-Très bonne idée ! Avant de coder davantage, posons les bases proprement. Je vais rédiger une expression du besoin structurée.
-
-
-
-Voilà une première base de travail. Les points en orange dans la section 5 sont cliquables pour me répondre directement.
-
-Les questions les plus importantes à trancher avant de coder sont :
-
-La cantine : planifie-t-on les déjeuners de semaine, ou uniquement les dîners et les week-ends ?
-La persistance : c'est le point technique crucial — les données stockées dans le navigateur disparaissent si on vide le cache. Voulez-vous pouvoir exporter/importer un fichier, ou une vraie base ?
-Le roulement : comment je dois calculer les suggestions (X jours sans répétition, alterner les types de plats…) ?
-Pour le planning : veut-on planifier uniquement dîner, ou aussi les déjeuners ? Les enfants mangent souvent à la cantine ?
-
-13:55
-Les enfants mangent à la cantine le midi en semaine. Le week-end, on mange tous ensemble. Donc on planifie : les dîners tous les jours + les déjeuners du week-end uniquement. Mon conjoint et moi mangeons souvent à l'extérieur le midi en semaine, donc pas besoin de le planifier non plus.
-
-les enfants mangent à la cantine, donc essentiellement le soir et les week-ends sauf en vacances
-
-13:56
-Parfait, c'est clair ! Je mets à jour l'expression du besoin.
-
-
-
-La règle de planification est bien intégrée. Il reste 4 questions ouvertes — les plus importantes à trancher sont selon moi :
-
-La persistance des données — c'est un choix technique qui impacte tout le reste. Si les données sont stockées uniquement dans le navigateur, un nettoyage de cache ou un changement d'appareil les efface. Un export/import JSON serait plus sûr et simple à faire.
-
-Le roulement des suggestions — savoir si vous pensez plutôt "pas de répétition avant X jours" ou "équilibre viande/poisson/végé" changera la logique de l'algorithme.
-
-Prenez le temps d'y répondre avant qu'on code la version finale !
-
-Pour la saisonnalité : comment définir les saisons pour les plats ? Printemps/été/automne/hiver, ou autre découpage ?
-
-14:02
-Printemps/été/automne/hiver c'est bien. Mais je voudrais aussi pouvoir associer des plats à des périodes de fêtes : Noël, Pâques, etc.
-
-la saisonnalité en 4 saisons est suffisante. il faudrait que je puisse saisir d'anciens repas. Il faut aussi que je puisse bouger par glisser-déposer ou en modifiant car ça arrive que je change les prévisions. Laisse de côté les critères de roulement. Quand je fais ma saisie, il faut que je vois les 4 semaines précédentes et ensuite que j'ai accès aux 2 semaines "vides" à venir. Pas de besoin d'import/export. pour les vacances, je cocherai moi même, les repas à ne pas prévoir. Tu me laisses tout accessible par défaut
-
-14:06
-Parfait, c'est très clair ! Je mets le document à jour.
-
-
-
-Le document est complet — toutes les questions sont résolues. Voici un résumé de ce qu'on a arrêté dans cette version :
-
-Ce qui a évolué par rapport à v0.2 : saisonnalité confirmée en 4 saisons avec périodes festives en bonus, saisie rétroactive possible, glisser-déposer sur le planning, fenêtre fixe de 7 semaines (S−4 à S+2), pas d'import/export, pas de règles de roulement strictes, et tous les créneaux accessibles par défaut.
-
-On peut maintenant se lancer dans le développement. Voulez-vous qu'on commence, ou y a-t-il encore des points à ajuster dans ce document ?
-
-dans la vue planning, je veux pouvoir voir toutes ces semaines sur une seule page, ça me permet de ne pas répéter le même plat trop souvent
-
-14:10
-Très bonne précision ! Donc la vue planning affiche les 7 semaines en une seule page (défilement vertical), ce qui permet de voir d'un coup d'œil ce qui a été fait récemment et d'éviter naturellement les répétitions — sans avoir besoin de règles algorithmiques. Je mets à jour.
-
-
-
-Le document est maintenant complet et toutes les décisions sont prises. Le schéma illustre bien la vue principale : les semaines passées remplies permettent de voir naturellement les répétitions, et les deux semaines à venir sont là pour planifier.
-
-On peut se lancer dans le développement. Voulez-vous qu'on commence, ou y a-t-il encore quelque chose à ajuster ?
-
-cela me paraît bien. il me faut une base de données gratuite, un prototype et j'aimerai généré le code par IA. que me conseilles-tu comme outil à utiliser? est-ce que tu es capable de me donner les bons prompts pour un design Figma Make? si oui, est-ce qu'aprés, je peux charge le prototype figma make avec le CDC que tu viens de faire pour le donner à Claude?
-
-14:15
-Très bonnes questions ! Laisse-moi te répondre point par point.
-
-Base de données gratuite
-Pour une app personnelle comme celle-ci, je te recommande Supabase (PostgreSQL hébergé). C'est gratuit pour un usage personnel, très simple à configurer, et ça s'intègre bien avec du code généré par IA. Alternative plus simple encore : tout en localStorage comme prévu dans le CDC — zéro infrastructure, zéro compte à créer, ça marche directement dans le navigateur.
-
-Mon conseil : commence avec localStorage pour le prototype, et migre vers Supabase si tu veux accéder à l'app depuis plusieurs appareils.
-
-Outils pour générer le code par IA
-Plusieurs options selon ton niveau technique :
-
-Si tu veux aller vite sans coder toi-même :
-
-Claude (moi) — je peux générer l'intégralité du code directement ici, dans cette conversation, avec le CDC qu'on vient de faire. C'est l'option la plus directe.
-Bolt.new ou Lovable.dev — des outils "vibe coding" où tu colles un prompt et ils génèrent une app React complète déployable. Très bien pour les prototypes.
-Si tu veux plus de contrôle :
-
-Cursor ou Windsurf — des éditeurs de code assistés par IA. Tu vois le code, tu peux le modifier, l'IA t'aide à chaque étape.
-Sur Figma Make + Claude
-Oui, je peux te générer des prompts pour Figma Make (l'outil de prototypage IA de Figma). Et oui, tu peux ensuite charger le prototype Figma Make avec le CDC — mais avec une nuance importante :
-
-
-
-Sur ta question précise : oui, je peux te générer les prompts Figma Make, et oui tu peux ensuite coller notre CDC dans Figma Make pour contextualiser. Mais attention — Figma Make est une fonctionnalité du plan payant Figma. Si tu ne l'as pas déjà, ça a un coût.
-
-Ma recommandation concrète : on part sur la voie A — je génère le code directement ici avec notre CDC. Tu obtiens une app fonctionnelle, colorée, avec localStorage, sans aucun outil externe. Si le résultat te plaît visuellement, on s'arrête là. Sinon on itère.
-
-Tu veux qu'on commence par coder l'app, ou tu préfères d'abord les prompts pour Figma Make ?
-
-le local storage ne me suffit pas, je veux y accéder de partout
-
-14:16
-Bonne décision. Dans ce cas Supabase est la meilleure option pour toi : gratuit pour un usage personnel, accessible de partout, et très simple à connecter.
-
-Avant de coder, il faut juste clarifier deux points :
-
-Q : As-tu déjà un compte Supabase ?
-R : Non, je vais en créer un
-
-Q : Par quelle voie veux-tu générer l'app ?
-R : Claude génère le code ici
-
-14:18
-Parfait ! Voici la marche à suivre pour Supabase, puis on code.
-
-Étape 1 — Créer ton projet Supabase (5 minutes)
-Va sur supabase.com → "Start your project" → crée un compte (gratuit)
-Clique "New project", donne-lui un nom (ex: repas-famille), choisis un mot de passe, région West EU (Paris)
-Attends ~2 minutes que le projet s'initialise
-Dans le menu gauche, va dans SQL Editor et exécute le script suivant pour créer les tables :
-sql
--- Catalogue de plats
-create table plats (
-  id uuid default gen_random_uuid() primary key,
-  titre text not null,
-  emoji text,
-  saisons text[] default '{}',
-  fetes text[] default '{}',
-  frequence text default 'annuelle',
-  notes text,
-  created_at timestamptz default now()
-);
-
--- Repas planifiés
-create table repas (
-  id uuid default gen_random_uuid() primary key,
-  date date not null,
-  type text not null check (type in ('dejeuner','diner')),
-  statut text not null default 'vide' check (statut in ('plat','exterieur','desactive','vide')),
-  plat_id uuid references plats(id) on delete set null,
-  note text,
-  created_at timestamptz default now()
-);
-
--- Index pour les requêtes par date
-create index repas_date_idx on repas(date);
-Dans Project Settings → API, copie :
-Project URL (ressemble à https://xxxx.supabase.co)
-anon public key (longue clé commençant par eyJ…)
-Étape 2 — Donne-moi ces deux clés
-Une fois le projet créé et les tables installées, colle ici ta Project URL et ta anon key — je génère ensuite le code complet de l'application avec tout branché dessus.
-
-Ces clés sont publiques par conception (c'est la clé "anon"), elles ne donnent accès qu'à ta base selon les règles que tu définis. Pas de risque à les partager ici.
-
-https://szndxdnpgyojlpximwzc.supabase.co
-sb_publishable_M4OjYzNnghG3ENvbbpRMhA_2aOIzdHT
-
-14:33
-Merci ! Je note que tu m'as partagé une clé sb_publishable_ — c'est une clé Supabase de type "publishable" (nouveau format). Il me faut aussi la clé anon classique pour les requêtes API. Va dans Project Settings → API et copie la clé intitulée "anon public" qui commence par eyJ....
-
-En attendant, je commence à coder l'application complète !
-
-
-Exécuté 2 commandes, consulté un fichier, lu un fichier
-Exécuté 2 commandes, consulté un fichier, lu un fichier
-Voici le fichier complet de l'application ! Il fonctionne déjà en mode hors-ligne avec des données d'exemple. Il te reste une seule chose à faire pour le connecter à Supabase :
-
-Brancher Supabase (2 minutes)
-Dans ton projet Supabase → Project Settings → API
-Copie la clé "anon public" (commence par eyJ…)
-Ouvre le fichier index.html dans un éditeur de texte, cherche la ligne :
-   const SUPABASE_KEY = 'REMPLACER_PAR_ANON_KEY';
-Remplace par ta vraie clé, sauvegarde
-Ce que fait l'application
-Planning — 7 semaines sur une page (S−4 à S+2), dîners tous les jours + déjeuners le week-end. Glisser-déposer pour déplacer les plats. Clic pour modifier, marquer "à l'extérieur" ou désactiver. Bouton "vac." par semaine pour activer les déjeuners.
-
-Catalogue — fiches par plat avec emoji, saisons, fêtes (Noël, Pâques…), notes libres, compteur de fréquence. Filtres par saison.
-
-Historique — navigation mois par mois, stats du mois (repas cuisinés, à l'extérieur, plat le plus fréquent).
-
-Suggestions — plats de saison non cuisinés récemment + demande libre à l'IA.
-
-Une fois ta clé anon en main, donne-la moi et je mets à jour le fichier directement !
-
-Index
-Code · HTML 
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6bmR4ZG5wZ3lvamxweGltd3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI1NTYsImV4cCI6MjA4OTUyODU1Nn0.7hg0fwXHR1ZxdHDNJIJq4SBwQz5xKQMuZLaCzKGGgrI
-
-14:41
-Parfait ! Je mets à jour le fichier avec ta vraie clé.
-
-
-Fichier modifié, lu un fichier
-Fichier modifié, lu un fichier
-C'est fait ! L'application est maintenant connectée à ta base Supabase.
-
-Pour la mettre en ligne
-Le plus simple pour y accéder de partout depuis n'importe quel appareil :
-
-Netlify Drop (gratuit, 30 secondes) — va sur netlify.com/drop, glisse-dépose ton fichier index.html, tu obtiens une URL publique comme https://ton-app.netlify.app
-GitHub Pages (gratuit) — si tu as un compte GitHub, crée un repo, dépose le fichier, active Pages dans les settings
-Une chose importante à faire dans Supabase
-Par défaut, Supabase bloque les requêtes depuis le navigateur (RLS — Row Level Security). Il faut désactiver ça pour ton usage personnel :
-
-Dans Supabase → Table Editor → table plats → icône bouclier → désactiver RLS
-Même chose pour la table repas
-Ou depuis le SQL Editor, colle ceci :
-
-sql
-alter table plats disable row level security;
-alter table repas disable row level security;
-Une fois ça fait, l'app lira et écrira directement dans ta base. Dis-moi si tu rencontres un souci !
-
-Index
-Code · HTML 
-quel est la différence entre github et vercel?
-
-14:46
-Les deux servent à héberger ton app, mais ils ont des rôles différents.
-
-GitHub est avant tout un endroit pour stocker et versionner ton code. C'est ton "coffre-fort" de fichiers. Il peut aussi héberger des sites simples via GitHub Pages, mais c'est une fonctionnalité secondaire.
-
-Vercel est un service d'hébergement et de déploiement conçu spécifiquement pour les applications web. Il se connecte à GitHub, surveille ton code, et redéploie automatiquement ton app à chaque fois que tu modifies un fichier.
-
-Dans la pratique, les deux fonctionnent souvent ensemble :
-
-GitHub = tu déposes ton code là
-Vercel = il surveille GitHub et publie ton app en ligne automatiquement
-Pour ton cas concret — une seule page HTML, usage personnel — la combinaison la plus simple est GitHub + Vercel :
-
-Tu crées un compte GitHub, tu y déposes ton index.html
-Tu crées un compte Vercel, tu le connectes à ton GitHub
-Vercel te donne une URL permanente comme notre-table.vercel.app
-Si demain tu veux modifier l'app (ajouter une fonctionnalité), tu mets à jour le fichier sur GitHub et Vercel redéploie tout seul
-Alternative encore plus simple : Netlify Drop que je t'ai mentionné — tu glisses-déposes ton fichier sur netlify.com/drop sans créer de compte GitHub. C'est parfait pour commencer, mais tu perds le suivi des modifications. Pour une app personnelle que tu vas faire évoluer, GitHub + Vercel est le meilleur choix sur le long terme.
-
-ok alors partons sur github et vercel
-
-14:48
-Voici le guide pas à pas :
-
-1. GitHub — stocker le code
-Va sur github.com → "Sign up" → crée un compte
-Une fois connecté, clique "New repository" (bouton vert)
-Nomme-le repas-famille, laisse tout par défaut, clique "Create repository"
-Sur la page du repo, clique "uploading an existing file"
-Glisse-dépose ton fichier index.html → clique "Commit changes"
-Ton code est maintenant en sécurité sur GitHub.
-
-2. Vercel — mettre en ligne
-Va sur vercel.com → "Sign up" → choisis "Continue with GitHub" (ça lie les deux comptes automatiquement)
-Clique "Add New Project"
-Tu vois ton repo repas-famille → clique "Import"
-Laisse tous les paramètres par défaut → clique "Deploy"
-En 30 secondes, Vercel te donne une URL du type repas-famille.vercel.app
-3. Dernière étape — autoriser Supabase
-Supabase a besoin de savoir que les requêtes venant de ton URL Vercel sont autorisées. Dans Supabase :
-
-Project Settings → API → CORS (ou Authentication → URL Configuration)
-Ajoute ton URL Vercel dans les "Allowed origins"
-À partir de là, l'app est accessible depuis n'importe quel appareil — téléphone, tablette, ordi — en ouvrant simplement l'URL. Et si tu veux modifier l'app plus tard, tu mets à jour le fichier sur GitHub et Vercel redéploie automatiquement.
-
-Lance-toi, et dis-moi si tu bloques quelque part !
-
-je ne trouve pas API/Cors
-
-14:55
-Pas de souci, l'interface Supabase a changé récemment. Cherche plutôt ici :
-
-Project Settings → Configuration → API — il y a une section "API Settings" avec un champ "Allowed origins" ou "Additional allowed origins".
-
-Si tu ne trouves toujours pas, ce n'est pas bloquant pour commencer. Essaie d'abord d'ouvrir ton URL Vercel dans le navigateur et teste l'app. Dans la plupart des cas, Supabase accepte les requêtes par défaut quand le RLS est désactivé — tu n'as peut-être pas besoin de configurer les CORS du tout.
-
-As-tu déjà lancé le SQL pour désactiver le RLS sur les deux tables ?
-
-sql
-alter table plats disable row level security;
-alter table repas disable row level security;
-C'est ça le point le plus important. Si c'est fait, ouvre ton URL Vercel et dis-moi ce que tu vois — on règle les éventuels problèmes au fur et à mesure.
-
-quand je fais créneau effacé, ça ne se vide pas de suite, je dois rafraichir la page. Quand j'ajoute un plat déjà enregistré, je voudrais pouvoir modifier le titre (par exemple, je sélectionne quiche salade, mais je change salade en concombre par exemple)
-
-15:12
-Deux bugs/améliorations clairs. Je corrige les deux :
-
-Créneau effacé — le repas est bien supprimé en base mais l'affichage ne se rafraîchit pas immédiatement
-Titre modifiable au moment de la saisie — quand on sélectionne un plat dans le planning, pouvoir ajuster le titre pour ce repas précis (sans modifier le plat du catalogue)
-
-A consulté 5 fichiers
-A consulté 5 fichiers
-J'ai tout ce qu'il me faut. Je fais les deux corrections :
-
-
-Exécuté 5 commandes, a consulté 2 fichiers, fichier modifié
-Exécuté 5 commandes, a consulté 2 fichiers, fichier modifié
-Maintenant il faut aussi ajouter la colonne titre_override dans Supabase :
-
-
-Presented file
-Presented file
-Voici le fichier mis à jour ! Deux choses à faire :
-
-1. Ajouter la colonne dans Supabase
-Dans le SQL Editor de Supabase, colle ceci :
-
-sql
-alter table repas add column if not exists titre_override text;
-2. Ce qui a changé
-Créneau effacé — setMealStatus est maintenant async : il attend que Supabase confirme la suppression avant de rafraîchir l'affichage. Le planning se met à jour immédiatement sans rechargement.
-
-Titre modifiable — quand tu sélectionnes un plat dans le modal, un champ apparaît avec le titre du plat pré-rempli. Tu peux le modifier librement (ex: "Quiche salade" → "Quiche concombre"). Cette modification est locale à ce repas uniquement — le catalogue reste intact. Le titre personnalisé s'affiche ensuite directement dans la case du planning.
-
-Index
-Code · HTML 
-
-
-
-
-
-Claude est une IA et peut faire des erreurs. Veuillez vérifier les réponses.
-Index · HTML
-Copier
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -378,7 +23,7 @@ Copier
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font-body); background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
- 
+
 /* HEADER */
 .app-header { background: white; border-bottom: 1px solid var(--gray-200); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 50; }
 .app-logo { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--gray-800); display: flex; align-items: center; gap: 8px; }
@@ -393,11 +38,11 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
 .sync-dot.error { background: var(--coral); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
- 
+
 /* LAYOUT */
 .page { display: none; padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
 .page.active { display: block; }
- 
+
 /* PLANNING PAGE */
 .planning-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
 .planning-toolbar h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
@@ -407,7 +52,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .btn-primary { background: var(--orange); color: white; border-color: var(--orange); }
 .btn-primary:hover { background: var(--orange-d); border-color: var(--orange-d); }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
- 
+
 /* PLANNING GRID */
 .planning-grid { display: flex; flex-direction: column; gap: 3px; }
 .week-row { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 3px; align-items: stretch; }
@@ -418,16 +63,16 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .wk-current .wk-tag { background: var(--orange-l); color: var(--orange-d); }
 .wk-future .wk-tag { background: var(--green-l); color: var(--green); }
 .week-row.wk-current .day-cell { border-color: var(--orange-m); }
- 
+
 .day-header-row { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 3px; margin-bottom: 2px; }
 .day-header-row .spacer { }
 .day-header { text-align: center; font-size: 11px; font-weight: 500; color: var(--gray-400); padding: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
 .day-header.is-today { color: var(--orange-d); font-weight: 700; }
- 
+
 .day-cell { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 4px; min-height: 70px; display: flex; flex-direction: column; gap: 3px; transition: border-color 0.15s; }
 .day-cell.drag-over { border-color: var(--orange); background: var(--orange-l); }
 .day-cell.is-today { border-color: var(--orange-m); }
- 
+
 .meal-slot { border-radius: 6px; padding: 4px 6px; font-size: 11px; cursor: pointer; transition: all 0.15s; position: relative; line-height: 1.3; }
 .meal-slot.empty { border: 1px dashed var(--gray-200); color: var(--gray-400); text-align: center; padding: 5px 4px; }
 .meal-slot.empty:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-l); }
@@ -441,11 +86,11 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .slot-label { font-size: 9px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1px; }
 .slot-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
 .slot-emoji { font-size: 13px; }
- 
+
 .vacances-toggle { font-size: 10px; color: var(--gray-400); cursor: pointer; text-align: center; padding: 1px 0; }
 .vacances-toggle:hover { color: var(--amber); }
 .vacances-active .vacances-toggle { color: var(--amber); }
- 
+
 /* MODAL */
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
 .modal-backdrop.open { display: flex; }
@@ -467,7 +112,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .saison-cb[value="hiver"]:checked + .saison-label { background: #EFF6FF; color: #1D4ED8; }
 .saison-cb[value="toutes"]:checked + .saison-label { background: var(--green-l); color: var(--green); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); }
- 
+
 /* PLAT PICKER dans modal repas */
 .plat-search { margin-bottom: 10px; }
 .plat-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); }
@@ -486,7 +131,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .quick-actions { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
 .quick-action { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); transition: all 0.15s; }
 .quick-action:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-l); }
- 
+
 /* CATALOGUE PAGE */
 .catalogue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
 .catalogue-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
@@ -523,7 +168,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .empty-state { text-align: center; padding: 3rem; color: var(--gray-400); }
 .empty-state .es-icon { font-size: 48px; margin-bottom: 1rem; }
 .empty-state p { font-size: 14px; }
- 
+
 /* HISTORIQUE PAGE */
 .historique-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
 .historique-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
@@ -549,7 +194,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .badge-vide { background: var(--gray-100); color: var(--gray-400); }
 .hist-meal-name { font-size: 13px; flex: 1; }
 .hist-meal-emoji { font-size: 16px; }
- 
+
 /* SUGGESTIONS PAGE */
 .sugg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
 .sugg-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
@@ -567,11 +212,11 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .ai-response { font-size: 13px; color: var(--gray-600); line-height: 1.7; margin-top: 10px; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); white-space: pre-wrap; }
 .ai-input-row { display: flex; gap: 8px; }
 .ai-input-row input { flex: 1; }
- 
+
 /* TOAST */
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-800); color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 300; transition: transform 0.25s; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
- 
+
 /* RESPONSIVE */
 @media (max-width: 700px) {
   .nav-tabs { gap: 1px; }
@@ -590,7 +235,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 </style>
 </head>
 <body>
- 
+
 <header class="app-header">
   <div class="app-logo">Notre <span>Table</span></div>
   <nav class="nav-tabs">
@@ -603,7 +248,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connecté</span></div>
   </div>
 </header>
- 
+
 <!-- ===== PLANNING ===== -->
 <div class="page active" id="page-planning">
   <div class="planning-toolbar">
@@ -624,7 +269,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
   </div>
   <div class="planning-grid" id="planning-grid"></div>
 </div>
- 
+
 <!-- ===== CATALOGUE ===== -->
 <div class="page" id="page-catalogue">
   <div class="catalogue-header">
@@ -645,7 +290,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
   </div>
   <div class="plats-grid" id="plats-grid"></div>
 </div>
- 
+
 <!-- ===== HISTORIQUE ===== -->
 <div class="page" id="page-historique">
   <div class="historique-header">
@@ -659,7 +304,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
   <div class="month-stats" id="month-stats"></div>
   <div class="month-list" id="month-list"></div>
 </div>
- 
+
 <!-- ===== SUGGESTIONS ===== -->
 <div class="page" id="page-suggestions">
   <div class="sugg-header">
@@ -676,7 +321,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     <div class="ai-response" id="ai-response" style="display:none"></div>
   </div>
 </div>
- 
+
 <!-- ===== MODAL REPAS ===== -->
 <div class="modal-backdrop" id="modal-repas">
   <div class="modal">
@@ -691,6 +336,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
       <div class="form-label">Choisir un plat</div>
       <div class="plat-search"><input class="form-input" id="repas-search" placeholder="Rechercher un plat…" oninput="filterPlatOptions()"></div>
       <div class="plat-list" id="repas-plat-list"></div>
+      <button class="btn btn-sm" style="margin-top:8px;width:100%;justify-content:center;border-style:dashed;" onclick="openPlatFromRepas()">+ Créer un nouveau plat</button>
     </div>
     <div class="form-group" id="titre-override-group" style="display:none">
       <label class="form-label">Préciser le titre <span style="font-weight:400;color:var(--gray-400)">(pour ce repas uniquement)</span></label>
@@ -706,7 +352,7 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     </div>
   </div>
 </div>
- 
+
 <!-- ===== MODAL PLAT ===== -->
 <div class="modal-backdrop" id="modal-plat">
   <div class="modal">
@@ -751,16 +397,16 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script>
 // ============================================================
 // CONFIG SUPABASE — remplacer ANON_KEY quand disponible
 // ============================================================
 const SUPABASE_URL = 'https://szndxdnpgyojlpximwzc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6bmR4ZG5wZ3lvamxweGltd3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI1NTYsImV4cCI6MjA4OTUyODU1Nn0.7hg0fwXHR1ZxdHDNJIJq4SBwQz5xKQMuZLaCzKGGgrI';
- 
+
 // ============================================================
 // STATE
 // ============================================================
@@ -772,7 +418,8 @@ let editingRepasKey = null;
 let editingPlatId = null;
 let selectedPlatId = null;
 let dragSource = null;
- 
+let returnToRepasAfterPlat = false;
+
 // ============================================================
 // SUPABASE HELPERS
 // ============================================================
@@ -798,7 +445,7 @@ async function sbFetch(endpoint, options = {}) {
     throw e;
   }
 }
- 
+
 async function loadAll() {
   setSyncStatus('syncing');
   try {
@@ -819,21 +466,21 @@ async function loadAll() {
   }
   renderAll();
 }
- 
+
 function setSyncStatus(status) {
   const dot = document.getElementById('sync-dot');
   const label = document.getElementById('sync-label');
   dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
   label.textContent = status === 'syncing' ? 'Sync…' : status === 'error' ? 'Hors ligne' : 'Connecté';
 }
- 
+
 // ============================================================
 // DATES & WEEKS
 // ============================================================
 const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 const DAYS_LONG = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
- 
+
 function getMondayOf(date) {
   const d = new Date(date);
   const day = d.getDay() || 7;
@@ -841,9 +488,9 @@ function getMondayOf(date) {
   d.setHours(0,0,0,0);
   return d;
 }
- 
+
 function toISO(date) { return date.toISOString().slice(0,10); }
- 
+
 function getWeeksToShow() {
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -863,7 +510,7 @@ function getWeeksToShow() {
   }
   return weeks;
 }
- 
+
 function getCurrentSeason() {
   const m = new Date().getMonth();
   if (m >= 2 && m <= 4) return 'printemps';
@@ -871,26 +518,26 @@ function getCurrentSeason() {
   if (m >= 8 && m <= 10) return 'automne';
   return 'hiver';
 }
- 
+
 function isWeekend(date) { return date.getDay() === 0 || date.getDay() === 6; }
- 
+
 function isVacances(dateISO) {
   const stored = JSON.parse(localStorage.getItem('vacances') || '{}');
   const monday = toISO(getMondayOf(new Date(dateISO)));
   return !!stored[monday];
 }
- 
+
 function toggleVacances(mondayISO) {
   const stored = JSON.parse(localStorage.getItem('vacances') || '{}');
   stored[mondayISO] ? delete stored[mondayISO] : stored[mondayISO] = true;
   localStorage.setItem('vacances', JSON.stringify(stored));
   renderPlanning();
 }
- 
+
 function shouldShowDejeuner(date) {
   return isWeekend(date) || isVacances(toISO(date));
 }
- 
+
 // ============================================================
 // PLANNING RENDER
 // ============================================================
@@ -899,7 +546,7 @@ function renderPlanning() {
   const weeks = getWeeksToShow();
   const grid = document.getElementById('planning-grid');
   grid.innerHTML = '';
- 
+
   // Update day headers
   const startMonday = weeks[0].days[0];
   for (let i = 0; i < 7; i++) {
@@ -909,13 +556,13 @@ function renderPlanning() {
     dh.className = 'day-header' + (isToday ? ' is-today' : '');
     dh.textContent = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i];
   }
- 
+
   weeks.forEach(week => {
     const mondayISO = toISO(week.days[0]);
     const isVac = isVacances(mondayISO);
     const row = document.createElement('div');
     row.className = `week-row wk-${week.type}${isVac ? ' vacances-active' : ''}`;
- 
+
     // Week label
     const wLabel = document.createElement('div');
     wLabel.className = 'week-label';
@@ -925,7 +572,7 @@ function renderPlanning() {
     const dateRange = `${d0.getDate()}/${d0.getMonth()+1} – ${d6.getDate()}/${d6.getMonth()+1}`;
     wLabel.innerHTML = `<span class="wk-tag">${tagText}</span><div class="wk-dates">${dateRange}</div><div class="vacances-toggle" onclick="toggleVacances('${mondayISO}')" title="Semaine de vacances">${isVac ? '🏖 vac.' : '+ vac.'}</div>`;
     row.appendChild(wLabel);
- 
+
     // Day cells
     week.days.forEach((date, di) => {
       const dateISO = toISO(date);
@@ -934,28 +581,28 @@ function renderPlanning() {
       const cell = document.createElement('div');
       cell.className = 'day-cell' + (isToday ? ' is-today' : '');
       cell.dataset.date = dateISO;
- 
+
       // Drag & drop
       cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
       cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
       cell.addEventListener('drop', e => { e.preventDefault(); cell.classList.remove('drag-over'); handleDrop(dateISO); });
- 
+
       if (showDej) cell.appendChild(buildSlot(dateISO, 'dejeuner'));
       cell.appendChild(buildSlot(dateISO, 'diner'));
       row.appendChild(cell);
     });
- 
+
     grid.appendChild(row);
   });
 }
- 
+
 function buildSlot(dateISO, type) {
   const key = `${dateISO}_${type}`;
   const r = repas[key];
   const slot = document.createElement('div');
   const statut = r ? r.statut : 'vide';
   slot.dataset.key = key;
- 
+
   if (statut === 'desactive') {
     slot.className = 'meal-slot desactive';
     slot.textContent = '—';
@@ -987,33 +634,33 @@ function buildSlot(dateISO, type) {
   slot.onclick = () => openRepasModal(dateISO, type);
   return slot;
 }
- 
+
 async function handleDrop(targetDateISO) {
   if (!dragSource) return;
   const [srcDate, srcType] = dragSource.split('_');
   const srcRepas = repas[dragSource];
   if (!srcRepas || srcRepas.statut !== 'plat') return;
- 
+
   const targetKey = `${targetDateISO}_${srcType}`;
   // Swap or move
   const targetRepas = repas[targetKey];
- 
+
   // Update source → vide
   await saveRepasData(srcDate, srcType, { statut: 'vide', plat_id: null, note: null });
   // Update target → plat de source
   await saveRepasData(targetDateISO, srcType, { statut: 'plat', plat_id: srcRepas.plat_id, note: srcRepas.note });
- 
+
   if (targetRepas && targetRepas.statut === 'plat') {
     await saveRepasData(srcDate, srcType, { statut: 'plat', plat_id: targetRepas.plat_id, note: targetRepas.note });
   }
   renderPlanning();
 }
- 
+
 function scrollToToday() {
   const todayCell = document.querySelector('.day-cell.is-today');
   if (todayCell) todayCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
- 
+
 // ============================================================
 // REPAS MODAL
 // ============================================================
@@ -1021,11 +668,11 @@ function openRepasModal(dateISO, type) {
   editingRepasKey = `${dateISO}_${type}`;
   const r = repas[editingRepasKey];
   selectedPlatId = r && r.statut === 'plat' ? r.plat_id : null;
- 
+
   const d = new Date(dateISO + 'T12:00:00');
   document.getElementById('modal-repas-title').textContent =
     `${DAYS_LONG[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()].toLowerCase()} — ${type === 'diner' ? 'Dîner' : 'Déjeuner'}`;
- 
+
   document.getElementById('repas-note').value = r && r.note ? r.note : '';
   document.getElementById('repas-search').value = '';
   document.getElementById('repas-titre-override').value = r && r.titre_override ? r.titre_override : (r && r.plat_id ? (plats.find(p=>p.id===r.plat_id)||{}).titre||'' : '');
@@ -1033,11 +680,11 @@ function openRepasModal(dateISO, type) {
   renderPlatOptions('');
   document.getElementById('modal-repas').classList.add('open');
 }
- 
+
 function filterPlatOptions() {
   renderPlatOptions(document.getElementById('repas-search').value);
 }
- 
+
 function renderPlatOptions(q) {
   const season = getCurrentSeason();
   const list = document.getElementById('repas-plat-list');
@@ -1058,7 +705,7 @@ function renderPlatOptions(q) {
       </div>
     </div>`).join('') || '<div style="padding:12px;color:var(--gray-400);font-size:13px;text-align:center">Aucun plat trouvé</div>';
 }
- 
+
 function selectPlatInModal(id) {
   selectedPlatId = id;
   const plat = plats.find(p => p.id === id);
@@ -1071,7 +718,7 @@ function selectPlatInModal(id) {
   }
   renderPlatOptions(document.getElementById('repas-search').value);
 }
- 
+
 async function setMealStatus(status) {
   const [date, type] = editingRepasKey.split('_');
   await saveRepasData(date, type, { statut: status, plat_id: null, note: document.getElementById('repas-note').value || null });
@@ -1079,7 +726,7 @@ async function setMealStatus(status) {
   renderPlanning();
   showToast(status === 'exterieur' ? '🍽 Repas à l\'extérieur noté' : status === 'desactive' ? 'Créneau désactivé' : 'Créneau effacé');
 }
- 
+
 async function saveRepas() {
   const [date, type] = editingRepasKey.split('_');
   const note = document.getElementById('repas-note').value || null;
@@ -1095,7 +742,7 @@ async function saveRepas() {
   closeModal('modal-repas');
   renderPlanning();
 }
- 
+
 async function saveRepasData(date, type, data) {
   const key = `${date}_${type}`;
   const existing = repas[key];
@@ -1121,14 +768,14 @@ async function saveRepasData(date, type, data) {
     }
   } catch(e) { console.error(e); }
 }
- 
+
 // ============================================================
 // CATALOGUE
 // ============================================================
 function getFreq(platId) {
   return Object.values(repas).filter(r => r.plat_id === platId && r.statut === 'plat').length;
 }
- 
+
 function setFilter(f) {
   currentFilter = f;
   document.querySelectorAll('.filter-chip').forEach(c => {
@@ -1136,7 +783,7 @@ function setFilter(f) {
   });
   renderCatalogue();
 }
- 
+
 function renderCatalogue() {
   const q = document.getElementById('cat-search').value.toLowerCase();
   const grid = document.getElementById('plats-grid');
@@ -1165,11 +812,11 @@ function renderCatalogue() {
     </div>`;
   }).join('');
 }
- 
+
 function saisonLabel(s) {
   return {toutes:'🌍 Toutes',printemps:'🌸 Printemps',ete:'☀️ Été',automne:'🍂 Automne',hiver:'❄️ Hiver'}[s] || s;
 }
- 
+
 function handleSaisonChange(cb) {
   if (cb.value === 'toutes' && cb.checked) {
     document.querySelectorAll('.saison-cb:not([value="toutes"])').forEach(c => c.checked = false);
@@ -1177,12 +824,19 @@ function handleSaisonChange(cb) {
     document.getElementById('s-toutes').checked = false;
   }
 }
- 
-function openPlatModal(id) {
+
+function openPlatFromRepas() {
+  const searchVal = document.getElementById('repas-search').value.trim();
+  returnToRepasAfterPlat = true;
+  document.getElementById('modal-repas').classList.remove('open');
+  openPlatModal(null, searchVal);
+}
+
+function openPlatModal(id, prefillTitre) {
   editingPlatId = id || null;
   const p = id ? plats.find(x => x.id === id) : null;
   document.getElementById('modal-plat-title').textContent = p ? 'Modifier le plat' : 'Nouveau plat';
-  document.getElementById('plat-titre').value = p ? p.titre : '';
+  document.getElementById('plat-titre').value = p ? p.titre : (prefillTitre || '');
   document.getElementById('plat-emoji').value = p ? (p.emoji || '') : '';
   document.getElementById('plat-fetes').value = p ? (p.fetes || []).join(', ') : '';
   document.getElementById('plat-frequence').value = p ? (p.frequence || 'annuelle') : 'annuelle';
@@ -1194,7 +848,7 @@ function openPlatModal(id) {
   });
   document.getElementById('modal-plat').classList.add('open');
 }
- 
+
 async function savePlat() {
   const titre = document.getElementById('plat-titre').value.trim();
   if (!titre) { showToast('Veuillez saisir un titre'); return; }
@@ -1209,7 +863,7 @@ async function savePlat() {
     frequence: document.getElementById('plat-frequence').value,
     notes: document.getElementById('plat-notes').value.trim() || null
   };
- 
+
   if (SUPABASE_KEY === 'REMPLACER_PAR_ANON_KEY') {
     if (editingPlatId) {
       const idx = plats.findIndex(p => p.id === editingPlatId);
@@ -1217,9 +871,11 @@ async function savePlat() {
     } else {
       plats.push({ id: 'local_' + Date.now(), ...data });
     }
-    closeModal('modal-plat'); renderCatalogue(); showToast('✓ Plat enregistré'); return;
+    closeModal('modal-plat'); renderCatalogue(); showToast('✓ Plat enregistré');
+    if (returnToRepasAfterPlat) { returnToRepasAfterPlat = false; const newPlat = plats[plats.length-1]; reopenRepasModalWithPlat(newPlat); }
+    return;
   }
- 
+
   try {
     if (editingPlatId) {
       const updated = await sbFetch(`plats?id=eq.${editingPlatId}`, { method: 'PATCH', body: JSON.stringify(data) });
@@ -1230,9 +886,21 @@ async function savePlat() {
       plats.push(created[0]);
     }
     closeModal('modal-plat'); renderCatalogue(); renderPlatOptions(''); showToast('✓ Plat enregistré');
+    if (returnToRepasAfterPlat) { returnToRepasAfterPlat = false; reopenRepasModalWithPlat(plats[plats.length-1]); }
   } catch(e) {}
 }
- 
+
+function reopenRepasModalWithPlat(plat) {
+  if (!editingRepasKey || !plat) return;
+  document.getElementById('modal-repas').classList.add('open');
+  selectedPlatId = plat.id;
+  document.getElementById('repas-search').value = '';
+  document.getElementById('repas-titre-override').value = plat.titre;
+  document.getElementById('titre-override-group').style.display = 'block';
+  renderPlatOptions('');
+  showToast('✓ Plat créé — sélectionné automatiquement');
+}
+
 async function deletePlat() {
   if (!editingPlatId) return;
   if (!confirm('Supprimer ce plat ?')) return;
@@ -1242,7 +910,7 @@ async function deletePlat() {
   plats = plats.filter(p => p.id !== editingPlatId);
   closeModal('modal-plat'); renderCatalogue(); showToast('Plat supprimé');
 }
- 
+
 // ============================================================
 // HISTORIQUE
 // ============================================================
@@ -1250,13 +918,13 @@ function changeMonth(delta) {
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
   renderHistorique();
 }
- 
+
 function renderHistorique() {
   const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
   document.getElementById('month-label').textContent = `${MONTHS_FR[m]} ${y}`;
   const daysInMonth = new Date(y, m+1, 0).getDate();
   let cuisines = 0, exterieurs = 0, platCount = {};
- 
+
   const dayGroups = {};
   for (let d = 1; d <= daysInMonth; d++) {
     const dateISO = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -1274,7 +942,7 @@ function renderHistorique() {
     });
     if (dayRepas.length) dayGroups[dateISO] = { date, meals: dayRepas };
   }
- 
+
   // Stats
   const topPlatId = Object.entries(platCount).sort((a,b)=>b[1]-a[1])[0];
   const topPlat = topPlatId ? plats.find(p => p.id === topPlatId[0]) : null;
@@ -1282,7 +950,7 @@ function renderHistorique() {
     <div class="stat-card"><div class="stat-num">${cuisines}</div><div class="stat-label">Repas cuisinés</div></div>
     <div class="stat-card"><div class="stat-num">${exterieurs}</div><div class="stat-label">Repas à l'extérieur</div></div>
     <div class="stat-card"><div class="stat-num" style="font-size:20px">${topPlat ? (topPlat.emoji || '🍽') + ' ' + topPlat.titre : '—'}</div><div class="stat-label">Plat le + fréquent</div></div>`;
- 
+
   // List
   const list = document.getElementById('month-list');
   if (!Object.keys(dayGroups).length) {
@@ -1306,7 +974,7 @@ function renderHistorique() {
       }).join('')}
     </div>`).join('');
 }
- 
+
 // ============================================================
 // SUGGESTIONS
 // ============================================================
@@ -1314,7 +982,7 @@ function renderSuggestions() {
   const season = getCurrentSeason();
   const seasonLabels = {printemps:'🌸 Printemps',ete:'☀️ Été',automne:'🍂 Automne',hiver:'❄️ Hiver'};
   document.getElementById('sugg-season-label').textContent = '— ' + seasonLabels[season];
- 
+
   const recentPlatIds = new Set(
     Object.values(repas)
       .filter(r => r.statut === 'plat' && r.plat_id)
@@ -1322,19 +990,19 @@ function renderSuggestions() {
       .slice(0, 14)
       .map(r => r.plat_id)
   );
- 
+
   const seasonal = plats.filter(p =>
     p.saisons && (p.saisons.includes(season) || p.saisons.includes('toutes') || p.saisons.length === 0)
   );
   const notRecent = seasonal.filter(p => !recentPlatIds.has(p.id));
   const recent = seasonal.filter(p => recentPlatIds.has(p.id));
   const suggestions = [...notRecent, ...recent].slice(0, 8);
- 
+
   const reasons = [
     'Parfait pour la saison', 'Longtemps non cuisiné', 'Très apprécié en famille',
     'Idéal ce soir', 'À remettre au menu', 'Facile et rapide', 'Un classique', 'Pourquoi pas ?'
   ];
- 
+
   const grid = document.getElementById('sugg-grid');
   if (!suggestions.length) {
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">🌿</div><p>Ajoutez des plats à votre catalogue pour obtenir des suggestions !</p></div>';
@@ -1350,7 +1018,7 @@ function renderSuggestions() {
       <button class="sugg-btn" onclick="addSuggestionToPlanning('${p.id}')">+ Ajouter</button>
     </div>`).join('');
 }
- 
+
 function addSuggestionToPlanning(platId) {
   const today = new Date(); today.setHours(0,0,0,0);
   const dateISO = toISO(today);
@@ -1363,7 +1031,7 @@ function addSuggestionToPlanning(platId) {
     showToast('Dîner déjà planifié aujourd\'hui — modifiez-le dans le planning');
   }
 }
- 
+
 async function askAI() {
   const prompt = document.getElementById('ai-prompt').value.trim();
   if (!prompt) return;
@@ -1389,7 +1057,7 @@ async function askAI() {
     respDiv.textContent = 'Erreur de connexion à l\'IA.';
   }
 }
- 
+
 // ============================================================
 // UI HELPERS
 // ============================================================
@@ -1403,22 +1071,22 @@ function showPage(name) {
   if (name === 'catalogue') renderCatalogue();
   if (name === 'planning') renderPlanning();
 }
- 
+
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
- 
+
 document.querySelectorAll('.modal-backdrop').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
- 
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
- 
+
 function renderAll() { renderPlanning(); renderCatalogue(); renderHistorique(); renderSuggestions(); }
- 
+
 // ============================================================
 // SAMPLE DATA (mode hors ligne)
 // ============================================================
@@ -1436,7 +1104,7 @@ function getSamplePlats() {
     { id: 's10', titre: 'Agneau pascal', emoji: '🐑', saisons: ['printemps'], fetes: ['Pâques'], frequence: 'annuelle', notes: '' },
   ];
 }
- 
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1444,4 +1112,3 @@ loadAll();
 </script>
 </body>
 </html>
- 
