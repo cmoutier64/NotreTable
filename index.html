@@ -1495,7 +1495,7 @@ function buildSaisieSlot(dateISO, type) {
   const isExt = r && r.statut === 'exterieur';
   const isDisabled = r && r.statut === 'desactive';
   const plat = hasVal ? plats.find(p => p.id === r.plat_id) : null;
-  const displayVal = isExt ? '🍽 À l'extérieur' : isDisabled ? '✕ Désactivé' : (plat ? `${plat.emoji || ''} ${r.titre_override || plat.titre}` : '');
+  const displayVal = isExt ? '🍽 Extérieur' : isDisabled ? '✕ Désactivé' : (plat ? `${plat.emoji || ''} ${r.titre_override || plat.titre}` : '');
   const inputClass = hasVal ? `has-${type}` : isExt ? 'is-ext' : isDisabled ? 'is-disabled' : '';
   const currentOverride = r && r.titre_override ? r.titre_override : '';
 
@@ -1537,7 +1537,7 @@ function openSaisieAC(dateISO, type, query) {
   });
 
   const specials = [
-    { val: 'exterieur', label: '🍽 À l'extérieur', special: true },
+    { val: 'exterieur', label: "🍽 Extérieur", special: true },
     { val: 'desactive', label: '✕ Désactiver ce créneau', special: true },
     { val: 'vide', label: '— Effacer —', special: true },
   ];
@@ -1571,7 +1571,7 @@ function selectSaisieAC(dateISO, type, val, label) {
   input.className = 'saisie-ac-input';
   input.dataset.val = val;
   if (val === 'exterieur') {
-    input.value = '🍽 À l'extérieur'; input.classList.add('is-ext');
+    input.value = "🍽 Extérieur"; input.classList.add('is-ext');
     input.dataset.statut = 'exterieur'; input.dataset.platid = '';
     if (overrideInput) overrideInput.style.display = 'none';
   } else if (val === 'desactive') {
