@@ -244,6 +244,26 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .saisie-titre-override:focus { outline: none; border-color: var(--orange); border-style: solid; }
 .saisie-save-row { padding: 12px 14px; border-top: 1px solid var(--gray-100); display: flex; justify-content: flex-end; gap: 8px; }
 
+/* AUTOCOMPLETE SAISIE */
+.saisie-autocomplete { position: relative; }
+.saisie-ac-input { width: 100%; padding: 7px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font-body); color: var(--gray-800); background: white; }
+.saisie-ac-input:focus { outline: none; border-color: var(--orange); }
+.saisie-ac-input.has-diner { background: var(--teal-l); border-color: var(--teal-m); color: var(--teal); }
+.saisie-ac-input.has-dejeuner { background: var(--amber-l); border-color: var(--amber-m); color: var(--amber); }
+.saisie-ac-input.is-ext { background: var(--coral-l); border-color: var(--coral-m); color: var(--coral); }
+.saisie-ac-input.is-disabled { background: var(--gray-100); color: var(--gray-400); }
+.saisie-ac-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--gray-200); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); max-height: 200px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.saisie-ac-dropdown.open { display: block; }
+.saisie-ac-item { padding: 7px 10px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--gray-100); }
+.saisie-ac-item:last-child { border-bottom: none; }
+.saisie-ac-item:hover, .saisie-ac-item.focused { background: var(--orange-l); }
+.saisie-ac-item .ac-emoji { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.saisie-ac-item .ac-name { flex: 1; font-weight: 500; }
+.saisie-ac-item .ac-freq { font-size: 11px; color: var(--gray-400); }
+.saisie-ac-special { color: var(--gray-600); font-style: italic; }
+.saisie-ac-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray-400); font-size: 14px; padding: 0; line-height: 1; }
+.saisie-ac-clear:hover { color: var(--coral); }
+
 /* TOAST */
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-800); color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 300; transition: transform 0.25s; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -1212,14 +1232,9 @@ async function savePlat() {
 
 function injectPlatInSaisie(plat, dateISO, type) {
   if (!plat) return;
-  // Rebuild the select options with the new plat and select it
-  renderSaisie(); // full re-render picks up the new plat
-  // Then select the new plat in the right slot
-  const sel = document.getElementById(`s-${dateISO}-${type}`);
-  if (sel) {
-    sel.value = plat.id;
-    onSaisieSelectChange(sel, dateISO, type);
-  }
+  renderSaisie(); // re-render to include new plat in AC list
+  const label = `${plat.emoji || ''} ${plat.titre}`;
+  selectSaisieAC(dateISO, type, plat.id, label);
   showToast(`✓ "${plat.titre}" créé et sélectionné`);
 }
 
@@ -1440,16 +1455,6 @@ function renderSaisie() {
   const grid = document.getElementById('saisie-grid');
   grid.innerHTML = '';
 
-  const platOptions = plats.map(p =>
-    `<option value="${p.id}">${p.emoji || ''} ${p.titre}</option>`
-  ).join('');
-
-  const specialOptions = `
-    <option value="">— non renseigné —</option>
-    <option value="exterieur">🍽 À l'extérieur</option>
-    <option value="desactive">✕ Désactivé</option>
-  `;
-
   days.forEach(date => {
     const dateISO = toISO(date);
     const di = isoToDisplay(dateISO);
@@ -1464,8 +1469,8 @@ function renderSaisie() {
         <span class="saisie-date">${dateLabel}</span>
       </div>
       <div class="saisie-slots">
-        ${buildSaisieSlot(dateISO, 'dejeuner', platOptions, specialOptions)}
-        ${buildSaisieSlot(dateISO, 'diner', platOptions, specialOptions)}
+        ${buildSaisieSlot(dateISO, 'dejeuner')}
+        ${buildSaisieSlot(dateISO, 'diner')}
       </div>
       <div class="saisie-save-row">
         <button class="btn btn-sm" onclick="saveSaisieDay('${dateISO}')">Enregistrer ce jour</button>
@@ -1479,46 +1484,37 @@ function renderSaisie() {
   saveAll.innerHTML = `<button class="btn btn-primary" onclick="saveSaisieWeek()">✓ Enregistrer toute la semaine</button>`;
   grid.appendChild(saveAll);
 
-  // Pre-select existing values in all selects
-  days.forEach(date => {
-    const dateISO = toISO(date);
-    ['dejeuner','diner'].forEach(type => {
-      const key = `${dateISO}_${type}`;
-      const r = repas[key];
-      if (!r) return;
-      const sel = document.getElementById(`s-${dateISO}-${type}`);
-      if (!sel) return;
-      const val = r.statut === 'plat' ? r.plat_id : r.statut;
-      sel.value = val || '';
-      onSaisieSelectChange(sel, dateISO, type);
-    });
-  });
+  // Pre-fill AC inputs with existing values — already handled in buildSaisieSlot via displayVal
 }
 
-function buildSaisieSlot(dateISO, type, platOptions, specialOptions) {
+function buildSaisieSlot(dateISO, type) {
   const key = `${dateISO}_${type}`;
   const r = repas[key];
-  const currentVal = r ? (r.statut === 'plat' ? r.plat_id : r.statut) : '';
-  const currentOverride = r && r.titre_override ? r.titre_override : '';
   const labelText = type === 'dejeuner' ? 'Déjeuner' : 'Dîner';
   const hasVal = r && r.statut === 'plat';
   const isExt = r && r.statut === 'exterieur';
   const isDisabled = r && r.statut === 'desactive';
-  const selectClass = `saisie-select ${hasVal ? 'has-value ' + type : ''} ${isExt ? 'exterieur' : ''} ${isDisabled ? 'desactive' : ''}`;
+  const plat = hasVal ? plats.find(p => p.id === r.plat_id) : null;
+  const displayVal = isExt ? '🍽 À l'extérieur' : isDisabled ? '✕ Désactivé' : (plat ? `${plat.emoji || ''} ${r.titre_override || plat.titre}` : '');
+  const inputClass = hasVal ? `has-${type}` : isExt ? 'is-ext' : isDisabled ? 'is-disabled' : '';
+  const currentOverride = r && r.titre_override ? r.titre_override : '';
 
   return `<div class="saisie-slot">
     <div class="saisie-slot-label">${labelText}</div>
-    <input class="saisie-search-input" id="ss-${dateISO}-${type}" placeholder="Filtrer les plats…"
-      oninput="filterSaisieSelect('${dateISO}','${type}',this.value)"
-      style="width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:12px;margin-bottom:4px;font-family:var(--font-body)">
-    <div class="saisie-select-wrap">
-      <select class="saisie-select ${hasVal ? 'has-value ' + type : ''} ${isExt ? 'exterieur' : ''} ${isDisabled ? 'desactive' : ''}"
-        id="s-${dateISO}-${type}"
-        onchange="onSaisieSelectChange(this, '${dateISO}', '${type}')">
-        ${specialOptions}
-        <optgroup label="— Plats —">${platOptions}</optgroup>
-      </select>
-      <span class="saisie-select-arrow">▾</span>
+    <div class="saisie-autocomplete" id="ac-wrap-${dateISO}-${type}">
+      <div style="position:relative">
+        <input class="saisie-ac-input ${inputClass}" id="ac-${dateISO}-${type}"
+          placeholder="Rechercher un plat…"
+          value="${displayVal}"
+          autocomplete="off"
+          data-platid="${hasVal ? r.plat_id : ''}"
+          data-statut="${r ? r.statut : 'vide'}"
+          oninput="openSaisieAC('${dateISO}','${type}',this.value)"
+          onfocus="openSaisieAC('${dateISO}','${type}',this.value)"
+          onkeydown="navSaisieAC(event,'${dateISO}','${type}')">
+        <button class="saisie-ac-clear" onclick="clearSaisieSlot('${dateISO}','${type}')" tabindex="-1">✕</button>
+      </div>
+      <div class="saisie-ac-dropdown" id="ac-drop-${dateISO}-${type}"></div>
     </div>
     <input class="saisie-titre-override"
       id="st-${dateISO}-${type}"
@@ -1529,33 +1525,105 @@ function buildSaisieSlot(dateISO, type, platOptions, specialOptions) {
   </div>`;
 }
 
-function filterSaisieSelect(dateISO, type, query) {
-  const sel = document.getElementById(`s-${dateISO}-${type}`);
-  if (!sel) return;
-  const q = query.toLowerCase().trim();
-  const optgroup = sel.querySelector('optgroup');
-  if (!optgroup) return;
-  optgroup.innerHTML = plats
-    .filter(p => !q || p.titre.toLowerCase().includes(q))
-    .map(p => `<option value="${p.id}">${p.emoji || ''} ${p.titre}</option>`)
-    .join('');
+function openSaisieAC(dateISO, type, query) {
+  const drop = document.getElementById(`ac-drop-${dateISO}-${type}`);
+  const input = document.getElementById(`ac-${dateISO}-${type}`);
+  if (!drop || !input) return;
+  const q = (query || '').toLowerCase().trim();
+
+  // Close all other dropdowns
+  document.querySelectorAll('.saisie-ac-dropdown.open').forEach(d => {
+    if (d.id !== `ac-drop-${dateISO}-${type}`) { d.classList.remove('open'); }
+  });
+
+  const specials = [
+    { val: 'exterieur', label: '🍽 À l'extérieur', special: true },
+    { val: 'desactive', label: '✕ Désactiver ce créneau', special: true },
+    { val: 'vide', label: '— Effacer —', special: true },
+  ];
+
+  const filtered = plats.filter(p => !q || p.titre.toLowerCase().includes(q))
+    .sort((a,b) => getFreq(b.id) - getFreq(a.id));
+
+  const specialItems = q ? [] : specials;
+
+  const items = [
+    ...specialItems.map(s => `<div class="saisie-ac-item saisie-ac-special" data-val="${s.val}" data-label="${s.label}" onclick="selectSaisieAC('${dateISO}','${type}','${s.val}','${s.label}')">
+      <span class="ac-emoji"></span><span class="ac-name">${s.label}</span>
+    </div>`),
+    ...filtered.map(p => `<div class="saisie-ac-item" data-val="${p.id}" data-label="${p.emoji||''} ${p.titre}" onclick="selectSaisieAC('${dateISO}','${type}','${p.id}','${p.emoji||''} ${p.titre}')">
+      <span class="ac-emoji">${p.emoji || '🍽'}</span>
+      <span class="ac-name">${p.titre}</span>
+      <span class="ac-freq">${getFreq(p.id)}×</span>
+    </div>`)
+  ];
+
+  drop.innerHTML = items.length ? items.join('') : '<div class="saisie-ac-item" style="color:var(--gray-400)">Aucun résultat</div>';
+  drop.classList.add('open');
+}
+
+function selectSaisieAC(dateISO, type, val, label) {
+  const input = document.getElementById(`ac-${dateISO}-${type}`);
+  const drop = document.getElementById(`ac-drop-${dateISO}-${type}`);
+  const overrideInput = document.getElementById(`st-${dateISO}-${type}`);
+  if (!input) return;
+  drop.classList.remove('open');
+  input.className = 'saisie-ac-input';
+  input.dataset.val = val;
+  if (val === 'exterieur') {
+    input.value = '🍽 À l'extérieur'; input.classList.add('is-ext');
+    input.dataset.statut = 'exterieur'; input.dataset.platid = '';
+    if (overrideInput) overrideInput.style.display = 'none';
+  } else if (val === 'desactive') {
+    input.value = '✕ Désactivé'; input.classList.add('is-disabled');
+    input.dataset.statut = 'desactive'; input.dataset.platid = '';
+    if (overrideInput) overrideInput.style.display = 'none';
+  } else if (val === 'vide') {
+    input.value = ''; input.dataset.statut = 'vide'; input.dataset.platid = '';
+    if (overrideInput) overrideInput.style.display = 'none';
+  } else {
+    const plat = plats.find(p => p.id === val);
+    input.value = label.trim();
+    input.classList.add(`has-${type}`);
+    input.dataset.statut = 'plat'; input.dataset.platid = val;
+    if (overrideInput) { overrideInput.style.display = 'block'; overrideInput.value = plat ? plat.titre : label.trim(); }
+  }
+}
+
+function clearSaisieSlot(dateISO, type) {
+  const input = document.getElementById(`ac-${dateISO}-${type}`);
+  const drop = document.getElementById(`ac-drop-${dateISO}-${type}`);
+  const overrideInput = document.getElementById(`st-${dateISO}-${type}`);
+  if (!input) return;
+  input.value = ''; input.className = 'saisie-ac-input';
+  input.dataset.statut = 'vide'; input.dataset.platid = '';
+  if (drop) drop.classList.remove('open');
+  if (overrideInput) overrideInput.style.display = 'none';
+  input.focus();
+  openSaisieAC(dateISO, type, '');
+}
+
+function navSaisieAC(e, dateISO, type) {
+  const drop = document.getElementById(`ac-drop-${dateISO}-${type}`);
+  if (!drop || !drop.classList.contains('open')) return;
+  const items = drop.querySelectorAll('.saisie-ac-item');
+  const focused = drop.querySelector('.saisie-ac-item.focused');
+  let idx = Array.from(items).indexOf(focused);
+  if (e.key === 'ArrowDown') { e.preventDefault(); idx = Math.min(idx+1, items.length-1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); idx = Math.max(idx-1, 0); }
+  else if (e.key === 'Enter' && focused) { e.preventDefault(); focused.click(); return; }
+  else if (e.key === 'Escape') { drop.classList.remove('open'); return; }
+  else return;
+  items.forEach(i => i.classList.remove('focused'));
+  if (items[idx]) { items[idx].classList.add('focused'); items[idx].scrollIntoView({block:'nearest'}); }
 }
 
 function onSaisieSelectChange(sel, dateISO, type) {
-  const val = sel.value;
+  const val = sel ? sel.value : '';
   const overrideInput = document.getElementById(`st-${dateISO}-${type}`);
-  // Update styling
-  sel.className = 'saisie-select';
   if (val && val !== 'exterieur' && val !== 'desactive') {
-    sel.classList.add('has-value', type);
     const plat = plats.find(p => p.id === val);
     if (overrideInput) { overrideInput.style.display = 'block'; overrideInput.value = overrideInput.value || (plat ? plat.titre : ''); }
-  } else if (val === 'exterieur') {
-    sel.classList.add('exterieur');
-    if (overrideInput) overrideInput.style.display = 'none';
-  } else if (val === 'desactive') {
-    sel.classList.add('desactive');
-    if (overrideInput) overrideInput.style.display = 'none';
   } else {
     if (overrideInput) overrideInput.style.display = 'none';
   }
@@ -1564,19 +1632,20 @@ function onSaisieSelectChange(sel, dateISO, type) {
 async function saveSaisieDay(dateISO) {
   const types = ['dejeuner', 'diner'];
   for (const type of types) {
-    const sel = document.getElementById(`s-${dateISO}-${type}`);
+    const input = document.getElementById(`ac-${dateISO}-${type}`);
     const override = document.getElementById(`st-${dateISO}-${type}`);
-    if (!sel) continue;
-    const val = sel.value;
+    if (!input) continue;
+    const statut = input.dataset.statut || 'vide';
+    const platId = input.dataset.platid || null;
     const titreOverride = override && override.value.trim() ? override.value.trim() : null;
-    if (val === '' || val === null) {
+    if (statut === 'vide') {
       await saveRepasData(dateISO, type, { statut: 'vide', plat_id: null, note: null, titre_override: null });
-    } else if (val === 'exterieur' || val === 'desactive') {
-      await saveRepasData(dateISO, type, { statut: val, plat_id: null, note: null, titre_override: null });
-    } else {
-      const plat = plats.find(p => p.id === val);
+    } else if (statut === 'exterieur' || statut === 'desactive') {
+      await saveRepasData(dateISO, type, { statut, plat_id: null, note: null, titre_override: null });
+    } else if (statut === 'plat' && platId) {
+      const plat = plats.find(p => p.id === platId);
       const finalOverride = (titreOverride && plat && titreOverride !== plat.titre) ? titreOverride : null;
-      await saveRepasData(dateISO, type, { statut: 'plat', plat_id: val, note: null, titre_override: finalOverride });
+      await saveRepasData(dateISO, type, { statut: 'plat', plat_id: platId, note: null, titre_override: finalOverride });
     }
   }
   showToast('✓ Jour enregistré');
@@ -1602,6 +1671,11 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 document.querySelectorAll('.modal-backdrop').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.saisie-autocomplete')) {
+    document.querySelectorAll('.saisie-ac-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
 });
 
 function showToast(msg) {
