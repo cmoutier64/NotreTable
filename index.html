@@ -691,6 +691,26 @@ function renderPlanning() {
   });
 }
 
+function addSlotX(slot, dateISO, type) {
+  const x = slot.querySelector('.slot-x');
+  if (!x) return;
+  x.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await quickDisable(e, dateISO, type);
+  });
+}
+
+function addSlotRestore(slot, dateISO, type) {
+  const r = slot.querySelector('.slot-restore');
+  if (!r) return;
+  r.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await quickRestore(e, dateISO, type);
+  });
+}
+
 function buildSlot(dateISO, type) {
   const key = `${dateISO}_${type}`;
   const r = repas[key];
@@ -700,13 +720,15 @@ function buildSlot(dateISO, type) {
 
   if (statut === 'desactive') {
     slot.className = 'meal-slot desactive';
-    slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em;opacity:.5">${type === 'diner' ? 'Dîner' : 'Déj.'} désactivé</span><span class="slot-restore" title="Réactiver" onclick="quickRestore(event,'${dateISO}','${type}')">↩</span>`;
+    slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em;opacity:.5">${type === 'diner' ? 'Dîner' : 'Déj.'} désactivé</span><span class="slot-restore" title="Réactiver">↩</span>`;
+    addSlotRestore(slot, dateISO, type);
     return slot;
   }
   if (statut === 'exterieur') {
     slot.className = 'meal-slot exterieur';
-    slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">🍽 Extérieur</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
-    slot.onclick = () => openRepasModal(dateISO, type);
+    slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">🍽 Extérieur</span><span class="slot-x" title="Désactiver">✕</span>`;
+    addSlotX(slot, dateISO, type);
+    slot.addEventListener('click', () => openRepasModal(dateISO, type));
     return slot;
   }
   if (statut === 'plat' && r && r.plat_id) {
@@ -715,17 +737,19 @@ function buildSlot(dateISO, type) {
       slot.className = `meal-slot filled ${type}`;
       slot.draggable = true;
       const displayTitre = r.titre_override || plat.titre;
-      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${displayTitre}</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
+      slot.innerHTML = `<span class="slot-label">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-name">${plat.emoji || ''} ${displayTitre}</span><span class="slot-x" title="Désactiver">✕</span>`;
+      addSlotX(slot, dateISO, type);
       slot.addEventListener('dragstart', () => { dragSource = key; setTimeout(() => slot.style.opacity = '0.4', 0); });
       slot.addEventListener('dragend', () => { slot.style.opacity = '1'; dragSource = null; });
-      slot.onclick = () => openRepasModal(dateISO, type);
+      slot.addEventListener('click', () => openRepasModal(dateISO, type));
       return slot;
     }
   }
   // vide
   slot.className = 'meal-slot empty';
-  slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-x" title="Désactiver" onclick="quickDisable(event,'${dateISO}','${type}')">✕</span>`;
-  slot.onclick = () => openRepasModal(dateISO, type);
+  slot.innerHTML = `<span style="font-size:9px;text-transform:uppercase;letter-spacing:.04em">${type === 'diner' ? 'Dîner' : 'Déj.'}</span><span class="slot-x" title="Désactiver">✕</span>`;
+  addSlotX(slot, dateISO, type);
+  slot.addEventListener('click', () => openRepasModal(dateISO, type));
   return slot;
 }
 
@@ -765,7 +789,6 @@ async function handleDrop(targetDateISO) {
 }
 
 async function quickDisable(e, dateISO, type) {
-  e.stopPropagation();
   const label = type === 'diner' ? 'dîner' : 'déjeuner';
   const d = new Date(dateISO + 'T12:00:00');
   const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -777,7 +800,6 @@ async function quickDisable(e, dateISO, type) {
 }
 
 async function quickRestore(e, dateISO, type) {
-  e.stopPropagation();
   await saveRepasData(dateISO, type, { statut: 'vide', plat_id: null, note: null });
   renderPlanning();
 }
