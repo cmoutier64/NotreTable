@@ -249,20 +249,59 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* RESPONSIVE */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
+  .page { padding: 0.75rem; }
   .nav-tabs { gap: 1px; }
-  .nav-tab { padding: 5px 9px; font-size: 12px; }
-  .week-row { grid-template-columns: 56px repeat(7, minmax(0, 1fr)); }
-  .week-label { padding: 5px 6px; }
-  .day-cell { height: 76px; padding: 3px; }
-  .day-cell.has-two-slots { height: 110px; }
-  .meal-slot { padding: 3px 4px; }
-  .slot-name { font-size: 10px; }
+  .nav-tab { padding: 5px 8px; font-size: 11px; }
+  .app-logo { font-size: 17px; }
   .month-stats { grid-template-columns: repeat(3,1fr); }
-}
-@media (max-width: 480px) {
-  .app-logo { font-size: 18px; }
-  .day-header-row, .week-row { grid-template-columns: 44px repeat(7, minmax(0, 1fr)); }
+  .plats-grid { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); }
+  .saisie-slots { grid-template-columns: 1fr; }
+
+  /* Planning mobile : grille → liste verticale de semaines */
+  .day-header-row { display: none; }
+  .planning-grid { gap: 10px; }
+  .week-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    padding: 8px;
+  }
+  .week-label {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 6px 0;
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: 2px;
+  }
+  .week-label .wk-dates { margin-left: auto; }
+
+  /* Chaque jour = ligne horizontale date + slots */
+  .day-cell {
+    height: auto !important;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr;
+    gap: 4px;
+    align-items: center;
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 5px 6px;
+  }
+  .day-cell::before {
+    content: attr(data-dow);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .day-cell.is-today::before { color: var(--orange-d); }
+  .meal-slot { flex: none; font-size: 11px; min-height: 32px; }
+  .slot-name { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 </style>
 </head>
@@ -632,8 +671,10 @@ function renderPlanning() {
       const isToday = date.toDateString() === today.toDateString();
       const showDej = shouldShowDejeuner(date);
       const cell = document.createElement('div');
+      const dowShort = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][date.getDay()];
       cell.className = 'day-cell' + (isToday ? ' is-today' : '');
       cell.dataset.date = dateISO;
+      cell.dataset.dow = dowShort;
 
       // Drag & drop
       cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
@@ -725,6 +766,12 @@ async function handleDrop(targetDateISO) {
 
 async function quickDisable(e, dateISO, type) {
   e.stopPropagation();
+  const label = type === 'diner' ? 'dîner' : 'déjeuner';
+  const d = new Date(dateISO + 'T12:00:00');
+  const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const mois = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const dateStr = `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]}`;
+  if (!confirm(`Désactiver le ${label} du ${dateStr} ?`)) return;
   await saveRepasData(dateISO, type, { statut: 'desactive', plat_id: null, note: null });
   renderPlanning();
 }
