@@ -420,7 +420,10 @@ body { font-family: var(--font-body); background: var(--gray-50); color: var(--g
     </div>
     <div class="form-group">
       <div class="form-label">Choisir un plat</div>
-      <div class="plat-search"><input class="form-input" id="repas-search" placeholder="Rechercher un plat…" oninput="filterPlatOptions()"></div>
+      <div class="plat-search" style="display:flex;gap:6px;align-items:center;">
+        <input class="form-input" id="repas-search" placeholder="Taper pour filtrer…" oninput="filterPlatOptions()" style="flex:1">
+        <button class="btn btn-sm" style="flex-shrink:0" onclick="document.getElementById('repas-search').value='';filterPlatOptions()">✕</button>
+      </div>
       <div class="plat-list" id="repas-plat-list"></div>
       <button class="btn btn-sm" style="margin-top:8px;width:100%;justify-content:center;border-style:dashed;" onclick="openPlatFromRepas()">+ Créer un nouveau plat</button>
     </div>
@@ -582,7 +585,12 @@ function getMondayOf(date) {
   return d;
 }
 
-function toISO(date) { return date.toISOString().slice(0,10); }
+function toISO(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
 
 function getWeeksToShow() {
   const today = new Date();
@@ -838,7 +846,7 @@ function renderPlatOptions(q) {
   const season = getCurrentSeason();
   const list = document.getElementById('repas-plat-list');
   let filtered = plats.filter(p => {
-    if (q) return p.titre.toLowerCase().includes(q.toLowerCase());
+    if (q) return p.titre.toLowerCase().includes(q.toLowerCase()) || (p.notes && p.notes.toLowerCase().includes(q.toLowerCase()));
     return p.saisons && (p.saisons.includes(season) || p.saisons.includes('toutes') || p.saisons.length === 0);
   });
   if (!q) filtered.sort((a, b) => {
@@ -1224,6 +1232,10 @@ function changeMonth(delta) {
   renderHistorique();
 }
 
+function openHistEdit(dateISO, type) {
+  openRepasModal(dateISO, type);
+}
+
 function renderHistorique() {
   const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
   document.getElementById('month-label').textContent = `${MONTHS_FR[m]} ${y}`;
@@ -1233,7 +1245,7 @@ function renderHistorique() {
   const dayGroups = {};
   for (let d = 1; d <= daysInMonth; d++) {
     const dateISO = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const date = new Date(dateISO + 'T12:00:00');
+    const date = new Date(dateISO + 'T12:00:00'); // T12 évite le décalage UTC
     const dayRepas = [];
     ['dejeuner','diner'].forEach(type => {
       const r = repas[`${dateISO}_${type}`];
@@ -1270,11 +1282,13 @@ function renderHistorique() {
         const badgeClass = r.statut === 'exterieur' ? 'badge-ext' : type === 'diner' ? 'badge-diner' : 'badge-dejeuner';
         const name = r.statut === 'exterieur' ? 'À l\'extérieur' : r.statut === 'vide' ? 'Non renseigné' : (plat ? plat.titre : 'Plat inconnu');
         const emoji = plat ? (plat.emoji || '🍽') : (r.statut === 'exterieur' ? '🍽' : '');
-        return `<div class="hist-meal" onclick="openRepasModal('${dateISO}','${type}')">
-          <span class="hist-type-badge ${badgeClass}">${type === 'diner' ? 'Dîner' : 'Déjeuner'}</span>
+        const platName = plat ? plat.titre : '';
+        return `<div class="hist-meal">
+          <span class="hist-type-badge ${badgeClass}" style="cursor:pointer" onclick="openRepasModal('${dateISO}','${type}')">${type === 'diner' ? 'Dîner' : 'Déjeuner'}</span>
           <span class="hist-meal-emoji">${emoji}</span>
-          <span class="hist-meal-name">${name}</span>
-          ${r.note ? `<span style="font-size:11px;color:var(--gray-400)">📝</span>` : ''}
+          <span class="hist-meal-name" style="flex:1">${name}</span>
+          ${r.note ? `<span style="font-size:11px;color:var(--gray-400);margin-right:4px">📝</span>` : ''}
+          <span class="hist-edit-btn" onclick="openHistEdit('${dateISO}','${type}')" title="Modifier" style="font-size:12px;color:var(--gray-400);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid var(--gray-200);">✎</span>
         </div>`;
       }).join('')}
     </div>`).join('');
@@ -1442,6 +1456,21 @@ function renderSaisie() {
   saveAll.style.cssText = 'display:flex;justify-content:flex-end;margin-top:8px;';
   saveAll.innerHTML = `<button class="btn btn-primary" onclick="saveSaisieWeek()">✓ Enregistrer toute la semaine</button>`;
   grid.appendChild(saveAll);
+
+  // Pre-select existing values in all selects
+  days.forEach(date => {
+    const dateISO = toISO(date);
+    ['dejeuner','diner'].forEach(type => {
+      const key = `${dateISO}_${type}`;
+      const r = repas[key];
+      if (!r) return;
+      const sel = document.getElementById(`s-${dateISO}-${type}`);
+      if (!sel) return;
+      const val = r.statut === 'plat' ? r.plat_id : r.statut;
+      sel.value = val || '';
+      onSaisieSelectChange(sel, dateISO, type);
+    });
+  });
 }
 
 function buildSaisieSlot(dateISO, type, platOptions, specialOptions) {
