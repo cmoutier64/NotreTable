@@ -592,9 +592,19 @@ function toISO(date) {
 }
 
 function parseDate(dateISO) {
-  // Parse "YYYY-MM-DD" as LOCAL noon — never UTC
   const [y, m, d] = dateISO.split('-').map(Number);
   return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
+// Get display info from ISO string without any timezone risk
+function isoToDisplay(dateISO) {
+  const [y, m, d] = dateISO.split('-').map(Number);
+  // Tomohiko Sakamoto algorithm for day of week (0=Sun)
+  const t = [0,3,2,5,0,3,5,1,4,6,2,4];
+  let yr = y;
+  if (m < 3) yr--;
+  const dow = (yr + Math.floor(yr/4) - Math.floor(yr/100) + Math.floor(yr/400) + t[m-1] + d) % 7;
+  return { day: d, month: m - 1, year: y, dow }; // dow: 0=Sun,1=Mon,...,6=Sat
 }
 
 function getWeeksToShow() {
@@ -659,7 +669,9 @@ function renderPlanning() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(startMonday); d.setDate(startMonday.getDate() + i); d.setHours(12,0,0,0);
     const dh = document.getElementById('dh-'+i);
-    const isToday = d.toDateString() === today.toDateString();
+    const dISO = toISO(d);
+    const dInfo = isoToDisplay(dISO);
+    const isToday = dISO === toISO(today);
     dh.className = 'day-header' + (isToday ? ' is-today' : '');
     dh.textContent = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i];
   }
@@ -676,17 +688,19 @@ function renderPlanning() {
     const tagText = week.type === 'past' ? (week.offset === -1 ? 'S−1' : week.offset === -2 ? 'S−2' : week.offset === -3 ? 'S−3' : 'S−4')
                   : week.type === 'current' ? 'Cette sem.' : (week.offset === 1 ? 'S+1' : 'S+2');
     const d0 = week.days[0], d6 = week.days[6];
-    const dateRange = `${d0.getDate()}/${d0.getMonth()+1} – ${d6.getDate()}/${d6.getMonth()+1}`;
+    const iso0w = toISO(d0), iso6w = toISO(d6);
+    const di0w = isoToDisplay(iso0w), di6w = isoToDisplay(iso6w);
+    const dateRange = `${di0w.day}/${di0w.month+1} – ${di6w.day}/${di6w.month+1}`;
     wLabel.innerHTML = `<span class="wk-tag">${tagText}</span><div class="wk-dates">${dateRange}</div>`;
     row.appendChild(wLabel);
 
     // Day cells
     week.days.forEach((date, di) => {
       const dateISO = toISO(date);
-      const isToday = date.toDateString() === today.toDateString();
+      const isToday = dateISO === toISO(today);
       const showDej = shouldShowDejeuner(date);
       const cell = document.createElement('div');
-      const dowShort = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][date.getDay()];
+      const dowShort = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][isoToDisplay(dateISO).dow];
       cell.className = 'day-cell' + (isToday ? ' is-today' : '');
       cell.dataset.date = dateISO;
       cell.dataset.dow = dowShort;
@@ -805,10 +819,10 @@ async function handleDrop(targetDateISO) {
 
 async function quickDisable(e, dateISO, type) {
   const label = type === 'diner' ? 'dîner' : 'déjeuner';
-  const d = parseDate(dateISO);
+  const di = isoToDisplay(dateISO);
   const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const mois = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
-  const dateStr = `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]}`;
+  const dateStr = `${jours[di.dow]} ${di.day} ${mois[di.month]}`;
   if (!confirm(`Désactiver le ${label} du ${dateStr} ?`)) return;
   await saveRepasData(dateISO, type, { statut: 'desactive', plat_id: null, note: null });
   renderPlanning();
@@ -832,9 +846,9 @@ function openRepasModal(dateISO, type) {
   const r = repas[editingRepasKey];
   selectedPlatId = r && r.statut === 'plat' ? r.plat_id : null;
 
-  const d = parseDate(dateISO);
+  const di = isoToDisplay(dateISO);
   document.getElementById('modal-repas-title').textContent =
-    `${DAYS_LONG[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()].toLowerCase()} — ${type === 'diner' ? 'Dîner' : 'Déjeuner'}`;
+    `${DAYS_LONG[di.dow]} ${di.day} ${MONTHS_FR[di.month].toLowerCase()} — ${type === 'diner' ? 'Dîner' : 'Déjeuner'}`;
 
   document.getElementById('repas-note').value = r && r.note ? r.note : '';
   document.getElementById('repas-search').value = '';
@@ -1282,7 +1296,7 @@ function renderHistorique() {
   }
   list.innerHTML = Object.entries(dayGroups).reverse().map(([dateISO, {date, meals}]) => `
     <div class="hist-day">
-      <div class="hist-day-header"><span class="dow">${DAYS_LONG[date.getDay()]}</span> ${date.getDate()} ${MONTHS_FR[date.getMonth()]}</div>
+      <div class="hist-day-header"><span class="dow">${DAYS_LONG[isoToDisplay(dateISO).dow]}</span> ${isoToDisplay(dateISO).day} ${MONTHS_FR[isoToDisplay(dateISO).month]}</div>
       ${meals.map(({type, r}) => {
         const plat = r.plat_id ? plats.find(p => p.id === r.plat_id) : null;
         const badgeClass = r.statut === 'exterieur' ? 'badge-ext' : type === 'diner' ? 'badge-diner' : 'badge-dejeuner';
@@ -1418,8 +1432,10 @@ function renderSaisie() {
 
   const d0 = days[0], d6 = days[6];
   const MONTHS_SHORT = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const iso0 = toISO(d0), iso6 = toISO(d6);
+  const di0 = isoToDisplay(iso0), di6 = isoToDisplay(iso6);
   document.getElementById('saisie-week-label').textContent =
-    `${d0.getDate()} ${MONTHS_SHORT[d0.getMonth()]} – ${d6.getDate()} ${MONTHS_SHORT[d6.getMonth()]} ${d6.getFullYear()}`;
+    `${di0.day} ${MONTHS_SHORT[di0.month]} – ${di6.day} ${MONTHS_SHORT[di6.month]} ${di6.year}`;
 
   const grid = document.getElementById('saisie-grid');
   grid.innerHTML = '';
@@ -1436,8 +1452,9 @@ function renderSaisie() {
 
   days.forEach(date => {
     const dateISO = toISO(date);
-    const dow = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][date.getDay()];
-    const dateLabel = `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
+    const di = isoToDisplay(dateISO);
+    const dow = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][di.dow];
+    const dateLabel = `${di.day} ${MONTHS_SHORT[di.month]}`;
 
     const day = document.createElement('div');
     day.className = 'saisie-day';
