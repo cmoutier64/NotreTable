@@ -591,6 +591,12 @@ function toISO(date) {
   return `${y}-${m}-${d}`;
 }
 
+function parseDate(dateISO) {
+  // Parse "YYYY-MM-DD" as LOCAL noon — never UTC
+  const [y, m, d] = dateISO.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
 function getWeeksToShow() {
   const today = new Date();
   today.setHours(12,0,0,0);
@@ -624,7 +630,7 @@ function isWeekend(date) { return date.getDay() === 0 || date.getDay() === 6; }
 
 function isVacances(dateISO) {
   const stored = JSON.parse(localStorage.getItem('vacances') || '{}');
-  const monday = toISO(getMondayOf(new Date(dateISO)));
+  const monday = toISO(getMondayOf(parseDate(dateISO)));
   return !!stored[monday];
 }
 
@@ -651,7 +657,7 @@ function renderPlanning() {
   // Update day headers
   const startMonday = weeks[0].days[0];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(startMonday); d.setDate(startMonday.getDate() + i);
+    const d = new Date(startMonday); d.setDate(startMonday.getDate() + i); d.setHours(12,0,0,0);
     const dh = document.getElementById('dh-'+i);
     const isToday = d.toDateString() === today.toDateString();
     dh.className = 'day-header' + (isToday ? ' is-today' : '');
@@ -799,7 +805,7 @@ async function handleDrop(targetDateISO) {
 
 async function quickDisable(e, dateISO, type) {
   const label = type === 'diner' ? 'dîner' : 'déjeuner';
-  const d = new Date(dateISO + 'T12:00:00');
+  const d = parseDate(dateISO);
   const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const mois = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   const dateStr = `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]}`;
@@ -826,7 +832,7 @@ function openRepasModal(dateISO, type) {
   const r = repas[editingRepasKey];
   selectedPlatId = r && r.statut === 'plat' ? r.plat_id : null;
 
-  const d = new Date(dateISO + 'T12:00:00');
+  const d = parseDate(dateISO);
   document.getElementById('modal-repas-title').textContent =
     `${DAYS_LONG[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()].toLowerCase()} — ${type === 'diner' ? 'Dîner' : 'Déjeuner'}`;
 
@@ -1245,7 +1251,7 @@ function renderHistorique() {
   const dayGroups = {};
   for (let d = 1; d <= daysInMonth; d++) {
     const dateISO = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const date = new Date(dateISO + 'T12:00:00'); // T12 évite le décalage UTC
+    const date = parseDate(dateISO); // T12 évite le décalage UTC
     const dayRepas = [];
     ['dejeuner','diner'].forEach(type => {
       const r = repas[`${dateISO}_${type}`];
@@ -1401,10 +1407,11 @@ function saisieChangeWeek(delta) {
 }
 
 function renderSaisie() {
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(12,0,0,0);
   const monday = getMondayOf(today);
   const wStart = new Date(monday);
   wStart.setDate(monday.getDate() + saisieWeekOffset * 7);
+  wStart.setHours(12,0,0,0);
   const days = Array.from({length:7}, (_, i) => {
     const d = new Date(wStart); d.setDate(wStart.getDate() + i); d.setHours(12,0,0,0); return d;
   });
@@ -1560,12 +1567,13 @@ async function saveSaisieDay(dateISO) {
 }
 
 async function saveSaisieWeek() {
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(12,0,0,0);
   const monday = getMondayOf(today);
   const wStart = new Date(monday);
   wStart.setDate(monday.getDate() + saisieWeekOffset * 7);
+  wStart.setHours(12,0,0,0);
   const days = Array.from({length:7}, (_, i) => {
-    const d = new Date(wStart); d.setDate(wStart.getDate() + i); return d;
+    const d = new Date(wStart); d.setDate(wStart.getDate() + i); d.setHours(12,0,0,0); return d;
   });
   for (const date of days) {
     await saveSaisieDay(toISO(date));
